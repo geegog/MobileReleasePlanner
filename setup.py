@@ -61,6 +61,9 @@ class LPReleasePlanner(object):
         as the sum of the weighted average satisfaction WAS(i, k) of stakeholder priorities for
         all features f(i) when assigned to release k.
 
+        Note: We consider a solution to be sufficiently good (or qualified) if it achieves
+        at least 95 percent of the maximum objective function value.
+
         :param was: all WAS score of features for release plan (x)
         :return: Objective function score.
         """
