@@ -1,20 +1,19 @@
-,Resources,,,,Stakeholder S (1),,Stakeholder S (2),
-Feature f(i),"Analyst & designers (hrs) r(i,1)","Developers (hrs) r(i,2)","QA (hrs) r(i,3)",Budget (US$ in thousands),"Value value(1,i)","Urgency urgency(1,i)","Value value(2,i)","Urgency urgency(2,i)"
-1. Cost reduction of transceiver,150,120,20,"1,000",6,"(5, 4, 0)",2,"(0, 3, 6)"
-2. Expand memory on BTS controller,75,10,8,200,7,"(5, 0, 4)",5,"(9, 0, 0)"
-3. FCC out-of-band emissions,400,100,20,200,9,"(9, 0, 0)",3,"(2, 7, 0)"
-4. Software quality initiative,450,100,40,0,5,"(2, 7, 0)",7,"(7, 2, 0)"
-"5. USEast Inc., Feature 1",100,500,40,0,3,"(7, 2, 0)",2,"(9, 0, 0)"
-"6. USEast Inc., Feature 2",200,400,25,25,9,"(7, 2, 0)",3,"(5, 4, 0)"
-7. China Feature 1,50,250,20,500,5,"(9, 0, 0)",3,"(2, 7, 0)"
-8. China Feature 2,60,120,19,200,7,"(8, 1, 0)",1,"(0, 0, 9)"
-9. 12-carrier BTS for China,280,150,40,"1,500",6,"(9, 0, 0)",5,"(0, 8, 1)"
-10. Pole-mount packaging,200,300,40,500,2,"(5, 4, 0)",1,"(0, 0, 9)"
-11. Next-generation BTS,250,375,50,150,1,"(8, 1, 0)",5,"(0, 7, 2)"
-12. India BTS variant,100,300,25,50,3,"(9, 0, 0)",7,"(0, 6, 3)"
-13. Common feature 01,100,250,20,50,7,"(9, 0, 0)",9,"(9, 0, 0)"
-14. Common feature 02,0,100,15,0,8,"(9, 0, 0)",3,"(6, 3, 0)"
-15. Common feature 03,200,150,10,0,1,"(0, 0, 9)",5,"(3, 6, 0)"
-Total resource consumption,2615,3225,392,4375,,,,
-"Available capacity, Release 1","1,300","1,450",158,"2,200",,,,
-"Available capacity, Release 2","1,046","1,300",65,"1,750",,,,
+,,,Stakeholder S (1),,Stakeholder S (2),
+Feature Number,Feature f(i),"Effort Estimation t(i,x)","Value v(1,i)","Urgency u(1,i)","Value v(2,i)","Urgency u(2,i)"
+1,Cost reduction of transceiver,3,6,"(5, 4, 0)",2,"(0, 3, 6)"
+2,Expand memory on BTS controller,4,7,"(5, 0, 4)",5,"(9, 0, 0)"
+3,FCC out-of-band emissions,2,9,"(9, 0, 0)",3,"(2, 7, 0)"
+4,Software quality initiative,1,5,"(2, 7, 0)",7,"(7, 2, 0)"
+5,"USEast Inc., Feature 1",2,3,"(7, 2, 0)",2,"(9, 0, 0)"
+6,"USEast Inc., Feature 2",5,9,"(7, 2, 0)",3,"(5, 4, 0)"
+7,China Feature 1,8,5,"(9, 0, 0)",3,"(2, 7, 0)"
+8,China Feature 2,3,7,"(8, 1, 0)",1,"(0, 0, 9)"
+9,12-carrier BTS for China,1,6,"(9, 0, 0)",5,"(0, 8, 1)"
+10,Pole-mount packaging,0.5,2,"(5, 4, 0)",1,"(0, 0, 9)"
+11,Next-generation BTS,3,1,"(8, 1, 0)",5,"(0, 7, 2)"
+12,India BTS variant,5,3,"(9, 0, 0)",7,"(0, 6, 3)"
+13,Common feature 01,8,7,"(9, 0, 0)",9,"(9, 0, 0)"
+14,Common feature 02,2,8,"(9, 0, 0)",3,"(6, 3, 0)"
+15,Common feature 03,5,1,"(0, 0, 9)",5,"(3, 6, 0)"
+,Total effort estimation,52.5,,,,
+,Number of releases (R),3,,,,

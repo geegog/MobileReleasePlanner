@@ -5,8 +5,8 @@ import numpy as np
 class LPReleasePlanner(object):
 
     def __init__(self, stakeholder_importance=(4, 6), release_relative_importance=(0.7, 0.3, 0.0), number_of_releases=3,
-                 coupling=None,
-                 precedence=None):
+                 release_duration=14, effort_release_1=0.0, effort_release_2=0.0, effort_release_3=0.0,
+                 coupling=None, precedence=None):
         if precedence is None:
             precedence = {}
         if coupling is None:
@@ -16,13 +16,18 @@ class LPReleasePlanner(object):
         self.number_of_releases = number_of_releases
         self.coupling = coupling
         self.precedence = precedence
+        self.effort_release_1 = effort_release_1
+        self.effort_release_2 = effort_release_2
+        self.effort_release_3 = effort_release_3
+        self.release_duration = release_duration
         self.inputs = pd.read_csv("data/sample.csv", skiprows=1, nrows=15,
                                   dtype={"Value value(1,i)": "Int64", "Value value(2,i)": "Int64"})
-        self.inputs.columns = ["Feature f(i)", "Analyst & designers (hrs) r(i,1)", "Developers (hrs) r(i,2)",
-                               "QA (hrs) r(i,3)", "Budget (US$ in thousands)", "Value value(1,i)",
-                               "Urgency urgency(1,i)", "Value value(2,i)", "Urgency urgency(2,i)"]
+        self.inputs.columns = ["Feature number", "Feature f(i)", "Effort(days) t(i,2)", "Value v(1,i)",
+                               "Urgency u(1,i)", "Value v(2,i)", "Urgency u(2,i)"]
         features = self.inputs["Feature f(i)"].to_xarray().values
         self.results = []
+        self.mobile_release_plan = []
+        self.not_feasible_in_current_mobile_release_plan = []
         self.results.append(features.tolist())
 
     def calculate_was_for_all_features(self):
@@ -35,9 +40,10 @@ class LPReleasePlanner(object):
             row = []
             for index, data in self.inputs.iterrows():
                 result = self.release_relative_importance[k] * (self.was(
-                    [self.get_score(self.stakeholder_importance[0], data[5], self.urgency(vector=data[6], release=k)),
-                     self.get_score(self.stakeholder_importance[1], data[7], self.urgency(vector=data[8], release=k))]))
-                row.append((k + 1, result))
+                    [self.get_score(self.stakeholder_importance[0], data[3], self.urgency(vector=data[4], release=k)),
+                     self.get_score(self.stakeholder_importance[1], data[5], self.urgency(vector=data[6], release=k))]))
+                # (release, WAS, feature_number, feature, effort_estimation)
+                row.append((k + 1, result, data[0], data[1], data[2]))
             self.results.append(row)
 
     @staticmethod
@@ -105,6 +111,68 @@ class LPReleasePlanner(object):
         print(self.inputs.shape)
         print(self.inputs.head())
 
+    def assignment_function(self, array_was_feature):
+        """
+        Assigns a feature to a mobile release plan.
+
+        :param array_was_feature: Release and WAS for a feature
+        """
+
+        for feature_array in array_was_feature:
+            max_feature = self.get_max_was(feature_array)
+            if self.effort_release_1 + max_feature[4] <= self.release_duration:
+                self.append_to_release(1, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
+            elif self.effort_release_2 + max_feature[4] <= self.release_duration:
+                self.append_to_release(2, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
+            elif self.effort_release_3 + max_feature[4] <= self.release_duration:
+                self.append_to_release(3, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
+            else:
+                self.not_feasible_in_current_mobile_release_plan.append(feature_array)
+
+    @staticmethod
+    def get_max_was(feature_array):
+        """
+        Selects highest WAS.
+
+        :param feature_array: WAS options
+        :return:  Highest WAS.
+        """
+        selection = (0, 0, 0, "", 0)
+        del feature_array[0:1]
+        for (release, weight, feature_number, feature, effort_estimation) in feature_array:
+            if weight > selection[1]:
+                selection = (release, weight, feature_number, feature, effort_estimation)
+        return selection
+
+    def append_to_release(self, release, weight, feature_number, feature, effort_estimation):
+        """
+        Appends selected feature to mobile release plan.
+
+        :param release: Release number
+        :param weight: WAS
+        :param feature_number: feature number
+        :param feature: Feature number
+        :param effort_estimation: Effort estimate
+        """
+
+        self.mobile_release_plan.append((release, weight, feature_number, feature, effort_estimation))
+        self.increase_effort(release, effort_estimation)
+
+    def increase_effort(self, release, effort_estimation):
+        """
+        Increase effort of a release.
+
+        :param release: Release number
+        :param effort_estimation: Effort estimation
+        """
+
+        if release == 1:
+            self.effort_release_1 += effort_estimation
+        if release == 2:
+            self.effort_release_2 += effort_estimation
+        if release == 3:
+            self.effort_release_3 += effort_estimation
+
 
 def runner():
     coupling = {(7, 8), (9, 12), (13, 14)}
@@ -125,6 +193,12 @@ def runner():
     data = np.array(rows)
     result = pd.DataFrame(data=data)
     print(result)
+
+    lp.assignment_function(rows)
+
+    print(lp.mobile_release_plan)
+    # print(lp.objective_function(was))
+    print(lp.effort_release_1, lp.effort_release_2, lp.effort_release_3)
 
 
 runner()
