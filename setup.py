@@ -116,10 +116,11 @@ class LPReleasePlanner(object):
 
     def assignment_function(self, array_was_feature):
         """
-        Assigns a feature to a mobile release plan.
+        Greedy function for feature assignment.
 
         :param array_was_feature: Release and WAS for a feature
         """
+
         original_feature_set = copy.copy(array_was_feature)
         random.shuffle(array_was_feature)
         for feature_array in array_was_feature:
@@ -139,6 +140,16 @@ class LPReleasePlanner(object):
                 self.assign(max_feature, feature_array)
 
     def assign(self, max_feature, feature_array, total_effort=None, couple=None, couple_array=None):
+        """
+        Assigns a feature to a mobile release plan or put in not feasible list if not feasible in current plan.
+
+        :param max_feature: Feature with highest WAS
+        :param feature_array: Feature details
+        :param total_effort: Total effort estimate of coupled features
+        :param couple: Feature partner (couple)
+        :param couple_array: Couple details
+        """
+
         if self.can_assign_to_release(self.effort_release_1, max_feature[4], total_effort):
             if couple is not None:
                 self.append_to_release(1, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
@@ -164,6 +175,15 @@ class LPReleasePlanner(object):
                 self.delete_flag = True
 
     def can_assign_to_release(self, current_total_effort_of_release, effort_estimate, total_effort=None):
+        """
+        Assigns a feature to a mobile release plan or put in not feasible list if not feasible in current plan.
+
+        :param current_total_effort_of_release: Current sum of effort in a release
+        :param total_effort: Total effort estimate of coupled features
+        :param effort_estimate: Estimate of a feature
+
+        :return Sum of effort in a release
+        """
         if total_effort is None:
             return current_total_effort_of_release + effort_estimate <= self.release_duration
         else:
@@ -171,6 +191,13 @@ class LPReleasePlanner(object):
 
     @staticmethod
     def sum_couple_effort(effort_estimate_1, effort_estimate_2):
+        """
+        Sum of two estimate values.
+
+        :param effort_estimate_1: First effort estimate
+        :param effort_estimate_2: Second effort estimate
+        :return: Sum of two estimate values.
+        """
         return effort_estimate_1 + effort_estimate_2
 
     @staticmethod
@@ -223,6 +250,12 @@ class LPReleasePlanner(object):
             self.effort_release_3 += effort_estimation
 
     def is_coupled_with(self, feature_number):
+        """
+        Get other couple of a feature.
+
+        :param feature_number: Feature number
+        :return: Number of the feature's partner.
+        """
         coupled_with = None
         for (f1, f2) in self.coupling:
             if feature_number == f1:
