@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
+import random
+import copy
 
 
 class LPReleasePlanner(object):
 
-    def __init__(self, stakeholder_importance=(4, 6), release_relative_importance=(0.7, 0.3, 0.0), number_of_releases=3,
+    def __init__(self, stakeholder_importance=(4, 6), release_relative_importance=(0.3, 0.0, 0.7), number_of_releases=3,
                  release_duration=14, effort_release_1=0.0, effort_release_2=0.0, effort_release_3=0.0,
                  coupling=None, precedence=None):
         if precedence is None:
@@ -27,6 +29,7 @@ class LPReleasePlanner(object):
         features = self.inputs["Feature f(i)"].to_xarray().values
         self.results = []
         self.mobile_release_plan = []
+        self.delete_flag = False
         self.not_feasible_in_current_mobile_release_plan = []
         self.results.append(features.tolist())
 
@@ -74,7 +77,7 @@ class LPReleasePlanner(object):
         :return: Objective function score.
         """
         fitness = 0.0
-        for value in was:
+        for _, value, _, _, _ in was:
             fitness += value
         return fitness
 
@@ -117,17 +120,58 @@ class LPReleasePlanner(object):
 
         :param array_was_feature: Release and WAS for a feature
         """
-
+        original_feature_set = copy.copy(array_was_feature)
+        random.shuffle(array_was_feature)
         for feature_array in array_was_feature:
-            max_feature = self.get_max_was(feature_array)
-            if self.effort_release_1 + max_feature[4] <= self.release_duration:
-                self.append_to_release(1, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
-            elif self.effort_release_2 + max_feature[4] <= self.release_duration:
-                self.append_to_release(2, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
-            elif self.effort_release_3 + max_feature[4] <= self.release_duration:
-                self.append_to_release(3, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
+            if feature_array is not None:
+                max_feature = self.get_max_was(feature_array)
+                couple_number = self.is_coupled_with(max_feature[2])
+                if couple_number is not None:
+                    partner = self.get_max_was(original_feature_set[couple_number - 1])
+                    total_effort = self.sum_couple_effort(max_feature[4], partner[4])
+                    self.assign(max_feature, feature_array, total_effort, partner, original_feature_set[couple_number - 1])
+                    if self.delete_flag:
+                        index = [idx for idx, f in enumerate(array_was_feature) if (f is not None and f[0][2] == couple_number)]
+                        array_was_feature[index[0]] = None
+                        self.delete_flag = False
+                    continue
+
+                self.assign(max_feature, feature_array)
+
+    def assign(self, max_feature, feature_array, total_effort=None, couple=None, couple_array=None):
+        if self.can_assign_to_release(self.effort_release_1, max_feature[4], total_effort):
+            if couple is not None:
+                self.append_to_release(1, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
+                self.delete_flag = True
             else:
-                self.not_feasible_in_current_mobile_release_plan.append(feature_array)
+                self.append_to_release(1, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
+        elif self.can_assign_to_release(self.effort_release_2, max_feature[4], total_effort):
+            if couple is not None:
+                self.append_to_release(2, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
+                self.delete_flag = True
+            else:
+                self.append_to_release(2, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
+        elif self.can_assign_to_release(self.effort_release_3, max_feature[4], total_effort):
+            if couple is not None:
+                self.append_to_release(3, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
+                self.delete_flag = True
+            else:
+                self.append_to_release(3, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
+        else:
+            self.not_feasible_in_current_mobile_release_plan.append(feature_array)
+            if couple_array is not None:
+                self.not_feasible_in_current_mobile_release_plan.append(couple_array)
+                self.delete_flag = True
+
+    def can_assign_to_release(self, current_total_effort_of_release, effort_estimate, total_effort=None):
+        if total_effort is None:
+            return current_total_effort_of_release + effort_estimate <= self.release_duration
+        else:
+            return current_total_effort_of_release + total_effort <= self.release_duration
+
+    @staticmethod
+    def sum_couple_effort(effort_estimate_1, effort_estimate_2):
+        return effort_estimate_1 + effort_estimate_2
 
     @staticmethod
     def get_max_was(feature_array):
@@ -135,19 +179,19 @@ class LPReleasePlanner(object):
         Selects highest WAS.
 
         :param feature_array: WAS options
-        :return:  Highest WAS.
+        :return: Highest WAS.
         """
         selection = (0, 0, 0, "", 0)
-        del feature_array[0:1]
         for (release, weight, feature_number, feature, effort_estimation) in feature_array:
             if weight > selection[1]:
                 selection = (release, weight, feature_number, feature, effort_estimation)
         return selection
 
-    def append_to_release(self, release, weight, feature_number, feature, effort_estimation):
+    def append_to_release(self, release, weight, feature_number, feature, effort_estimation, couple=None):
         """
         Appends selected feature to mobile release plan.
 
+        :param couple: Coupled feature
         :param release: Release number
         :param weight: WAS
         :param feature_number: feature number
@@ -155,8 +199,13 @@ class LPReleasePlanner(object):
         :param effort_estimation: Effort estimate
         """
 
-        self.mobile_release_plan.append((release, weight, feature_number, feature, effort_estimation))
-        self.increase_effort(release, effort_estimation)
+        if couple is not None:
+            self.mobile_release_plan.append((release, couple[1], couple[2], couple[3], couple[4]))
+            self.mobile_release_plan.append((release, weight, feature_number, feature, effort_estimation))
+            self.increase_effort(release, effort_estimation + couple[4])
+        else:
+            self.mobile_release_plan.append((release, weight, feature_number, feature, effort_estimation))
+            self.increase_effort(release, effort_estimation)
 
     def increase_effort(self, release, effort_estimation):
         """
@@ -173,6 +222,15 @@ class LPReleasePlanner(object):
         if release == 3:
             self.effort_release_3 += effort_estimation
 
+    def is_coupled_with(self, feature_number):
+        coupled_with = None
+        for (f1, f2) in self.coupling:
+            if feature_number == f1:
+                coupled_with = f2
+            elif feature_number == f2:
+                coupled_with = f1
+        return coupled_with
+
 
 def runner():
     coupling = {(7, 8), (9, 12), (13, 14)}
@@ -188,16 +246,16 @@ def runner():
     release_3_object_score = lp.results[3]
 
     for i in range(0, 15):
-        rows.append([features[i], release_1_object_score[i], release_2_object_score[i], release_3_object_score[i]])
+        rows.append([release_1_object_score[i], release_2_object_score[i], release_3_object_score[i]])
 
-    data = np.array(rows)
-    result = pd.DataFrame(data=data)
-    print(result)
+    # data = np.array(rows)
+    # result = pd.DataFrame(data=data)
+    # print(result)
 
     lp.assignment_function(rows)
 
     print(lp.mobile_release_plan)
-    # print(lp.objective_function(was))
+    print(lp.objective_function(lp.mobile_release_plan))
     print(lp.effort_release_1, lp.effort_release_2, lp.effort_release_3)
 
 
