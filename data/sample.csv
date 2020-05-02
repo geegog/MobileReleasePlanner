@@ -1,5 +1,5 @@
 ,,,Stakeholder S (1),,Stakeholder S (2),
-Feature Number,Feature f(i),"Effort Estimation t(i,x)","Value v(1,i)","Urgency u(1,i)","Value v(2,i)","Urgency u(2,i)"
+Feature Key,Feature f(i),"Effort Estimation t(i,x)","Value v(1,i)","Urgency u(1,i)","Value v(2,i)","Urgency u(2,i)"
 1,Cost reduction of transceiver,3,6,"(5, 4, 0)",2,"(0, 3, 6)"
 2,Expand memory on BTS controller,4,7,"(5, 0, 4)",5,"(9, 0, 0)"
 3,FCC out-of-band emissions,2,9,"(9, 0, 0)",3,"(2, 7, 0)"
