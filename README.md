@@ -1,1 +1,1 @@
-ReleasePlanningLP
+MobileReleasePlanner

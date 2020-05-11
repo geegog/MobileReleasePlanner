@@ -1,10 +1,7 @@
 import pandas as pd
-import numpy as np
-import random
-import copy
 
 
-class LPReleasePlanner(object):
+class MobileReleasePlanner(object):
 
     def __init__(self, stakeholder_importance=(5, 5), release_relative_importance=(0.3, 0.3, 0.3),
                  release_duration=14, coupling=None):
@@ -18,14 +15,15 @@ class LPReleasePlanner(object):
         self.effort_release_2 = 0.0
         self.effort_release_3 = 0.0
         self.release_duration = release_duration
-        self.inputs = pd.read_csv("data/sample.csv", skiprows=1, nrows=15,
+        self.inputs = pd.read_csv("../data/sample.csv", skiprows=1, nrows=15,
                                   dtype={"Value value(1,i)": "Int64", "Value value(2,i)": "Int64"})
         self.inputs.columns = ["Feature Key", "Feature f(i)", "Effort(days) t(i,2)", "Value v(1,i)",
                                "Urgency u(1,i)", "Value v(2,i)", "Urgency u(2,i)"]
         features = self.inputs["Feature f(i)"].to_xarray().values
+        self.keys = self.inputs["Feature Key"].to_xarray().values.tolist()
+        self.effort = self.inputs["Effort(days) t(i,2)"].to_xarray().values.tolist()
         self.results = []
         self.mobile_release_plan = []
-        self.delete_flag = False
         self.not_feasible_in_current_mobile_release_plan = []
         self.results.append(features.tolist())
 
@@ -44,6 +42,39 @@ class LPReleasePlanner(object):
                 # (release, WAS, feature_key, feature, effort_estimation)
                 row.append((k + 1, result, data[0], data[1], data[2]))
             self.results.append(row)
+
+    def print(self):
+        """
+        Print shape and head of input csv file.
+
+        """
+        print(self.inputs.shape)
+        print(self.inputs.head())
+
+    @staticmethod
+    def get_score(stakeholder_importance, value_on_feature, urgency_on_feature):
+        """
+        Stakeholders priorities.
+
+        :param stakeholder_importance: Stakeholders' importance
+        :param value_on_feature: Stakeholders' value placed on feature(i)
+        :param urgency_on_feature: Stakeholders' urgency placed on feature(i)
+        :return: Product of Stakeholders' importance, value, and urgency.
+        """
+        return stakeholder_importance * value_on_feature * urgency_on_feature
+
+    @staticmethod
+    def urgency(vector, release):
+        """
+        Stakeholders' urgency on a release.
+
+        :param vector: Urgency vector of feature(i)
+        :param release: Release
+        :return: Urgency placed by stakeholder on release(r).
+        """
+        vector_tuple = tuple(
+            map(lambda v: v, vector.replace("(", "").replace(")", "").replace(" ", "").replace("\'", "").split(",")))
+        return int(vector_tuple[release])
 
     @staticmethod
     def was(scores):
@@ -76,102 +107,6 @@ class LPReleasePlanner(object):
         for _, value, _, _, _ in was:
             fitness += value
         return fitness
-
-    @staticmethod
-    def get_score(stakeholder_importance, value_on_feature, urgency_on_feature):
-        """
-        Stakeholders priorities.
-
-        :param stakeholder_importance: Stakeholders' importance
-        :param value_on_feature: Stakeholders' value placed on feature(i)
-        :param urgency_on_feature: Stakeholders' urgency placed on feature(i)
-        :return: Product of Stakeholders' importance, value, and urgency.
-        """
-        return stakeholder_importance * value_on_feature * urgency_on_feature
-
-    @staticmethod
-    def urgency(vector, release):
-        """
-        Stakeholders' urgency on a release.
-
-        :param vector: Urgency vector of feature(i)
-        :param release: Release
-        :return: Urgency placed by stakeholder on release(r).
-        """
-        vector_tuple = tuple(
-            map(lambda v: v, vector.replace("(", "").replace(")", "").replace(" ", "").replace("\'", "").split(",")))
-        return int(vector_tuple[release])
-
-    def print(self):
-        """
-        Print shape and head of input csv file.
-
-        """
-        print(self.inputs.shape)
-        print(self.inputs.head())
-
-    def assignment_function(self, array_was_feature):
-        """
-        Greedy function for feature assignment.
-
-        :param array_was_feature: Release and WAS for a feature
-        """
-
-        original_feature_set = copy.copy(array_was_feature)
-        random.shuffle(array_was_feature)
-        for feature_array in array_was_feature:
-            if feature_array is not None:
-                max_feature = self.get_max_was(feature_array)
-                couple_key = self.is_coupled_with(max_feature[2])
-                if couple_key is not None:
-                    feature = [(idx, feature) for idx, feature in enumerate(array_was_feature) if
-                               (feature is not None and feature[0][2] == couple_key)]
-                    partner = self.get_max_was(feature[0][1])
-                    total_effort = self.sum_couple_effort(max_feature[4], partner[4])
-                    self.assign(max_feature, feature_array, total_effort, partner,
-                                array_was_feature[feature[0][0]])
-                    if self.delete_flag:
-                        index = [idx for idx, f in enumerate(array_was_feature) if
-                                 (f is not None and f[0][2] == couple_key)]
-                        array_was_feature[index[0]] = None
-                        self.delete_flag = False
-                else:
-                    self.assign(max_feature, feature_array)
-
-    def assign(self, max_feature, feature_array, total_effort=None, couple=None, couple_array=None):
-        """
-        Assigns a feature to a mobile release plan or put in not feasible list if not feasible in current plan.
-
-        :param max_feature: Feature with highest WAS
-        :param feature_array: Feature details
-        :param total_effort: Total effort estimate of coupled features
-        :param couple: Feature partner (couple)
-        :param couple_array: Couple details
-        """
-
-        if self.can_assign_to_release(self.effort_release_1, max_feature[4], total_effort):
-            if couple is not None:
-                self.append_to_release(1, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
-                self.delete_flag = True
-            else:
-                self.append_to_release(1, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
-        elif self.can_assign_to_release(self.effort_release_2, max_feature[4], total_effort):
-            if couple is not None:
-                self.append_to_release(2, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
-                self.delete_flag = True
-            else:
-                self.append_to_release(2, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
-        elif self.can_assign_to_release(self.effort_release_3, max_feature[4], total_effort):
-            if couple is not None:
-                self.append_to_release(3, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
-                self.delete_flag = True
-            else:
-                self.append_to_release(3, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
-        else:
-            self.not_feasible_in_current_mobile_release_plan.append(feature_array)
-            if couple_array is not None:
-                self.not_feasible_in_current_mobile_release_plan.append(couple_array)
-                self.delete_flag = True
 
     def can_assign_to_release(self, current_total_effort_of_release, effort_estimate, total_effort=None):
         """
@@ -263,32 +198,15 @@ class LPReleasePlanner(object):
                 coupled_with = f1
         return coupled_with
 
+    def features(self):
+        self.calculate_was_for_all_features()
 
-def runner():
-    coupling = {(7, 8), (9, 12), (13, 14)}
+        rows = []
+        features = self.results[0]
+        release_1_object_score = self.results[1]
+        release_2_object_score = self.results[2]
+        release_3_object_score = self.results[3]
 
-    lp = LPReleasePlanner(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.3, 0.0, 0.7),
-                          release_duration=14)
-    lp.calculate_was_for_all_features()
-
-    rows = []
-    features = lp.results[0]
-    release_1_object_score = lp.results[1]
-    release_2_object_score = lp.results[2]
-    release_3_object_score = lp.results[3]
-
-    for i in range(0, 15):
-        rows.append([release_1_object_score[i], release_2_object_score[i], release_3_object_score[i]])
-
-    # data = np.array(rows)
-    # result = pd.DataFrame(data=data)
-    # print(result)
-
-    lp.assignment_function(rows)
-
-    print(lp.mobile_release_plan)
-    print(lp.objective_function(lp.mobile_release_plan))
-    print(lp.effort_release_1, lp.effort_release_2, lp.effort_release_3)
-
-
-runner()
+        for i in range(0, 15):
+            rows.append([release_1_object_score[i], release_2_object_score[i], release_3_object_score[i]])
+        return rows
