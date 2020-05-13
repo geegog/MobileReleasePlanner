@@ -1,3 +1,5 @@
+import random
+
 import pandas as pd
 
 
@@ -10,6 +12,9 @@ class MobileReleasePlanner(object):
         self.stakeholder_importance = stakeholder_importance
         self.release_relative_importance = release_relative_importance
         self.number_of_releases = 3
+        self.effort_release_1 = 0.0
+        self.effort_release_2 = 0.0
+        self.effort_release_3 = 0.0
         self.coupling = coupling
         self.release_duration = release_duration
         self.inputs = pd.read_csv("../data/sample.csv", skiprows=1, nrows=15,
@@ -192,3 +197,18 @@ class MobileReleasePlanner(object):
         for i in range(0, 15):
             rows.append([release_1_object_score[i], release_2_object_score[i], release_3_object_score[i]])
         return rows
+
+    @staticmethod
+    def get_random_was(feature_array, add_to_release=None):
+        """
+        Selects a WAS.
+
+        :param add_to_release: Specify a release to add this feature
+        :param feature_array: WAS options
+        :return: Any WAS.
+        """
+        index = random.randint(0, 2)
+        if add_to_release is not None:
+            _, score, key, description, effort = feature_array[index]
+            return add_to_release, score, key, description, effort
+        return feature_array[index]

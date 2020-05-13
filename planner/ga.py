@@ -16,16 +16,23 @@ class GA(base.MobileReleasePlanner):
         # seed: Initial seed solution
         # param m: Population of size
         self.seed = None
-        self.metadata = None
         self.m = 50
         # param cr: Crossover Rate
         self.cr = crossover_rate
         # param mr: Mutation Rate
         self.mr = mutation_rate
         self.scored = None
+        self.simulation = 0
+        self.max_simulation = 1000
 
         super(GA, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
         self.features = self.features()
+
+    def ranked(self):
+        self.scored.sort(key=lambda n: n[1])
+        self.scored.reverse()
+
+        return self.scored
 
     def score_population(self):
         """Return a scored and ranked copy of the population.
@@ -40,8 +47,8 @@ class GA(base.MobileReleasePlanner):
         if self.seed is None:
             raise Exception("Cannot score and rank an empty population.")
 
-        scored = [(self.seed[index], self.objective_function(solution), index) for index, solution in
-                  enumerate(self.metadata)]
+        scored = [(solution, self.evaluate(solution)) for index, solution in
+                  enumerate(self.seed)]
         scored.sort(key=lambda n: n[1])
         scored.reverse()
 
@@ -62,8 +69,8 @@ class GA(base.MobileReleasePlanner):
         for tupl in ranked:
             if tupl[1] > 0:
                 tally = tally + tupl[1] / shares
-            # chromosome, score, share range, index
-            self.scored.append((tupl[0], tupl[1], tally, tupl[2]))
+            # chromosome, score, share range
+            self.scored.append((tupl[0], tupl[1], tally))
 
     def new_population(self):
         """
@@ -73,7 +80,6 @@ class GA(base.MobileReleasePlanner):
         """
         if self.seed is None:
             self.seed = []
-            self.metadata = []
             for _ in range(0, self.m):
                 self.seed.append(self.create())
 
@@ -93,9 +99,8 @@ class GA(base.MobileReleasePlanner):
         solution = self.chromosome(sorted_plan)
 
         if self.exist(solution):
-            self.create()
+            return self.create()
         else:
-            self.metadata.append(sorted_plan)
             return solution
 
     @staticmethod
@@ -118,7 +123,7 @@ class GA(base.MobileReleasePlanner):
         :param solution: A chromosome
         :return: Provides a fitness score for a given solution
         """
-        return self.objective_function(solution)
+        return self.objective_function(self.get_mobile_plan_from_offspring(solution))
 
     def select(self, index=0):
         """
@@ -126,7 +131,7 @@ class GA(base.MobileReleasePlanner):
 
         :return: Chooses based on fitness score, a parent for the crossover operation.
         """
-        return self.scored[0][index]
+        return self.scored[index][0]
 
     def crossover(self, first_solution, second_solution):
         """
@@ -141,12 +146,16 @@ class GA(base.MobileReleasePlanner):
         [fp1, fp2] = random.sample(range(0, size), 2)
 
         key1 = first_solution[fp1]
-        key2 = second_solution[fp2]
+        key2 = first_solution[fp2]
 
         offspring = []
         for index, key in enumerate(second_solution):
-            if key == key1 or key == key2:
-                offspring.append(key)
+            if index == fp1:
+                offspring.append(key1)
+                continue
+            if index == fp2:
+                offspring.append(key2)
+                continue
             else:
                 offspring.append(first_solution[index])
 
@@ -183,26 +192,98 @@ class GA(base.MobileReleasePlanner):
         :param solution: A solution
         :return: Checks validity of solution against the user-defined constraints
         """
-        pass
+        validity_check = []
+        mrp = self.get_mobile_plan_from_offspring(solution)
 
-    def back_track(self, solution):
+        mr1 = [f_tuple for f_tuple in mrp if f_tuple[0] == 1]
+        mr2 = [f_tuple for f_tuple in mrp if f_tuple[0] == 2]
+        mr3 = [f_tuple for f_tuple in mrp if f_tuple[0] == 3]
+
+        for couple in self.coupling:
+            result = self.is_in_release(mr1, couple)
+            result2 = self.is_in_release(mr1, (couple[1], couple[0]))
+            validity_check.append(result)
+            validity_check.append(result2)
+        for couple in self.coupling:
+            result = self.is_in_release(mr2, couple)
+            result2 = self.is_in_release(mr2, (couple[1], couple[0]))
+            validity_check.append(result)
+            validity_check.append(result2)
+        for couple in self.coupling:
+            result = self.is_in_release(mr3, couple)
+            result2 = self.is_in_release(mr3, (couple[1], couple[0]))
+            validity_check.append(result)
+            validity_check.append(result2)
+
+        return not (False in validity_check)
+
+    def is_in_release(self, mr, couple):
+        for r in mr:
+            if r[2] == couple[0]:
+                return self.is_feature_in_release(mr, couple[1])
+            else:
+                continue
+
+    @staticmethod
+    def is_feature_in_release(mr, feature):
+        is_present = False
+        for r in mr:
+            if r[2] == feature:
+                is_present = True
+        return is_present
+
+    def get_mobile_plan_from_offspring(self, solution):
+        effort_release_1 = 0.0
+        effort_release_2 = 0.0
+        effort_release_3 = 0.0
+        plan = []
+
+        for key in solution:
+            effort = self.effort[self.get_feature_effort_index(key)]
+            if effort_release_1 <= self.release_duration and effort_release_1 + effort <= self.release_duration:
+                plan.append(self.get_feature_was(1, key))
+                effort_release_1 += effort
+            elif effort_release_2 <= self.release_duration and effort_release_2 + effort <= self.release_duration:
+                plan.append(self.get_feature_was(2, key))
+                effort_release_2 += effort
+            elif effort_release_3 <= self.release_duration and effort_release_3 + effort <= self.release_duration:
+                plan.append(self.get_feature_was(3, key))
+                effort_release_3 += effort
+            else:
+                plan.append(self.get_random_was([f_list for f_list in self.features if f_list[0][2] == key][0],
+                                                add_to_release=4))
+        return plan
+
+    def get_feature_was(self, release, key):
+        return [f_tuple for f_tuple in self.results[release] if f_tuple[2] == key][0]
+
+    def get_feature_effort_index(self, key):
+        return self.keys.index(key)
+
+    def ga_operation(self):
         """
-        Proprietary backtracking operation on a given solution.
-        This backtracks towards the first parent until a valid
-        solution is created or a user-defined number of backtrack operations is reached.
+        Perform selection, crossover, mutation, and validation.
 
-        :param solution: A solution
         :return: A valid solution
         """
-        pass
+        parent1 = self.select()
+        parent2 = self.select(index=1)
+        offspring_from_cr = self.crossover(parent1, parent2)
+        offspring_from_mr = self.mutation(offspring_from_cr)
+        if self.is_valid(offspring_from_mr):
+            return offspring_from_mr
+        else:
+            return self.ga_operation()
 
-    def cull(self, population):
+    def cull(self):
         """
         Cull(P) removes the (m + 1)th ranked solution from the population, P
 
-        :param population: A solution
         """
-        pass
+        self.ranked()
+        last = self.scored[-1]
+        feature = last[0]
+        self.seed.remove(feature)
 
     def check_termination(self):
         """
@@ -213,7 +294,7 @@ class GA(base.MobileReleasePlanner):
 
         :return: True or False
         """
-        pass
+        return self.simulation >= self.max_simulation
 
     def max(self):
         """
@@ -221,8 +302,25 @@ class GA(base.MobileReleasePlanner):
 
         :return: Solution in population P that has the highest fitness score.
         """
-        best = self.score_population()[0][0]
+        best = self.scored[0]
         return best
+
+    def solve(self):
+        self.new_population()
+        terminate_flag = False
+        try:
+            while not terminate_flag:
+                self.simulation += 1
+                self.proportion_population()
+                offspring = self.ga_operation()
+                # score = self.evaluate(offspring)
+                if not self.exist(offspring):
+                    self.seed.append(offspring)
+                    self.cull()
+                terminate_flag = self.check_termination()
+        except KeyboardInterrupt:
+            pass
+        return self.max()
 
 
 def runner():
@@ -231,10 +329,9 @@ def runner():
     ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
             release_duration=14)
 
-    ga.new_population()
-    ga.proportion_population()
+    best = ga.solve()
 
-    print(ga.mobile_release_plan)
+    print(ga.get_mobile_plan_from_offspring(best[0]))
     print(ga.objective_function(ga.mobile_release_plan))
     print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 

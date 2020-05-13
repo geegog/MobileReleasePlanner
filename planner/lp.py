@@ -13,9 +13,6 @@ class LP(base.MobileReleasePlanner):
 
         self.delete_flag = False
         self.highest = highest
-        self.effort_release_1 = 0.0
-        self.effort_release_2 = 0.0
-        self.effort_release_3 = 0.0
 
         super(LP, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
 
@@ -32,17 +29,6 @@ class LP(base.MobileReleasePlanner):
             if weight > selection[1]:
                 selection = (release, weight, feature_key, feature, effort_estimation)
         return selection
-
-    @staticmethod
-    def get_random_was(feature_array):
-        """
-        Selects a WAS.
-
-        :param feature_array: WAS options
-        :return: Any WAS.
-        """
-        index = random.randint(0, 2)
-        return feature_array[index]
 
     def assignment_function(self, array_was_feature):
         """
