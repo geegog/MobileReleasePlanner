@@ -8,12 +8,41 @@ from planner import base
 
 class LP(base.MobileReleasePlanner):
 
-    def __init__(self, stakeholder_importance, release_relative_importance, release_duration,
-                 coupling=None):
+    def __init__(self, stakeholder_importance=None, release_relative_importance=None, release_duration=None,
+                 coupling=None, highest=True):
 
         self.delete_flag = False
+        self.highest = highest
+        self.effort_release_1 = 0.0
+        self.effort_release_2 = 0.0
+        self.effort_release_3 = 0.0
 
         super(LP, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
+
+    @staticmethod
+    def get_max_was(feature_array):
+        """
+        Selects highest WAS.
+
+        :param feature_array: WAS options
+        :return: Highest WAS.
+        """
+        selection = (0, 0, 0, "", 0)
+        for (release, weight, feature_key, feature, effort_estimation) in feature_array:
+            if weight > selection[1]:
+                selection = (release, weight, feature_key, feature, effort_estimation)
+        return selection
+
+    @staticmethod
+    def get_random_was(feature_array):
+        """
+        Selects a WAS.
+
+        :param feature_array: WAS options
+        :return: Any WAS.
+        """
+        index = random.randint(0, 2)
+        return feature_array[index]
 
     def assignment_function(self, array_was_feature):
         """
@@ -26,12 +55,18 @@ class LP(base.MobileReleasePlanner):
         random.shuffle(array_was_feature)
         for feature_array in array_was_feature:
             if feature_array is not None:
-                max_feature = self.get_max_was(feature_array)
+                if self.highest:
+                    max_feature = self.get_max_was(feature_array)
+                else:
+                    max_feature = self.get_random_was(feature_array)
                 couple_key = self.is_coupled_with(max_feature[2])
                 if couple_key is not None:
                     feature = [(idx, feature) for idx, feature in enumerate(array_was_feature) if
                                (feature is not None and feature[0][2] == couple_key)]
-                    partner = self.get_max_was(feature[0][1])
+                    if self.highest:
+                        partner = self.get_max_was(feature[0][1])
+                    else:
+                        partner = self.get_random_was(feature[0][1])
                     total_effort = self.sum_couple_effort(max_feature[4], partner[4])
                     self.assign(max_feature, feature_array, total_effort, partner,
                                 array_was_feature[feature[0][0]])
@@ -73,10 +108,11 @@ class LP(base.MobileReleasePlanner):
             else:
                 self.append_to_release(3, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
         else:
-            self.not_feasible_in_current_mobile_release_plan.append(feature_array)
-            if couple_array is not None:
-                self.not_feasible_in_current_mobile_release_plan.append(couple_array)
+            if couple is not None:
+                self.append_to_release(4, max_feature[1], max_feature[2], max_feature[3], max_feature[4], couple)
                 self.delete_flag = True
+            else:
+                self.append_to_release(4, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
 
 
 def runner():

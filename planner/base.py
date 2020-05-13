@@ -11,9 +11,6 @@ class MobileReleasePlanner(object):
         self.release_relative_importance = release_relative_importance
         self.number_of_releases = 3
         self.coupling = coupling
-        self.effort_release_1 = 0.0
-        self.effort_release_2 = 0.0
-        self.effort_release_3 = 0.0
         self.release_duration = release_duration
         self.inputs = pd.read_csv("../data/sample.csv", skiprows=1, nrows=15,
                                   dtype={"Value value(1,i)": "Int64", "Value value(2,i)": "Int64"})
@@ -24,7 +21,6 @@ class MobileReleasePlanner(object):
         self.effort = self.inputs["Effort(days) t(i,2)"].to_xarray().values.tolist()
         self.results = []
         self.mobile_release_plan = []
-        self.not_feasible_in_current_mobile_release_plan = []
         self.results.append(features.tolist())
 
     def calculate_was_for_all_features(self):
@@ -133,20 +129,6 @@ class MobileReleasePlanner(object):
         :return: Sum of two estimate values.
         """
         return effort_estimate_1 + effort_estimate_2
-
-    @staticmethod
-    def get_max_was(feature_array):
-        """
-        Selects highest WAS.
-
-        :param feature_array: WAS options
-        :return: Highest WAS.
-        """
-        selection = (0, 0, 0, "", 0)
-        for (release, weight, feature_key, feature, effort_estimation) in feature_array:
-            if weight > selection[1]:
-                selection = (release, weight, feature_key, feature, effort_estimation)
-        return selection
 
     def append_to_release(self, release, weight, feature_key, feature, effort_estimation, couple=None):
         """
