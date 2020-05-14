@@ -148,7 +148,7 @@ def adjacency_matrix(parent1, parent2):
     return neighbors
 
 
-def fewest_neighbors(self, node, neighbors):
+def fewest_neighbors(node, neighbors):
     """Return the neighbor of this node with the fewest neighbors."""
     edges = [(n, len(neighbors[n])) for n in neighbors[node]]
     edges.sort(key=lambda n: n[1])

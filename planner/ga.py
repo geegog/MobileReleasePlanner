@@ -14,7 +14,7 @@ class GA(base.MobileReleasePlanner):
 
     def __init__(self, stakeholder_importance, release_relative_importance, release_duration, coupling=None,
                  crossover_rate=0.1, mutation_rate=0.05, max_simulation=600, cross_type='ordered',
-                 select_type='fittest'):
+                 select_type='fittest', population_size=50):
 
         self.crossover_type = ["ordered", "partially_matched", "edge_recombination"]
         self.selection_type = ["fittest", "tournament", "proportionate"]
@@ -27,7 +27,7 @@ class GA(base.MobileReleasePlanner):
         # seed: Initial seed solution
         # param m: Population of size
         self.seed = None
-        self.m = 50
+        self.m = population_size
         # param cr: Crossover Rate
         self.cr = crossover_rate
         # param mr: Mutation Rate
@@ -156,31 +156,33 @@ class GA(base.MobileReleasePlanner):
 
     def tournament_select(self):
         """Return the best genotype found in a random sample."""
-        sample_size = int(math.ceil(self.seed * 0.02))
+        sample_size = int(math.ceil(self.m * 0.02))
         tournament_size = sample_size
 
         pop = [random.choice(self.seed)
                for _ in range(0, tournament_size)]
 
-        scored = [(geno, self.evaluate(geno)) for geno in pop]
-        scored.sort(key=lambda n: n[1])
-        scored.reverse()
+        self.scored = [(geno, self.evaluate(geno)) for geno in pop]
+        self.scored.sort(key=lambda n: n[1])
+        self.scored.reverse()
 
-        return scored[0][0]
+        return self.scored[0][0]
 
     def select(self, index=0):
         if self.select_type == self.selection_type[2]:
+            self.proportion_population()
             return self.proportionate_select()
         elif self.select_type == self.selection_type[1]:
             return self.tournament_select()
         else:
+            self.proportion_population()
             return self.select_fittest(index=index)
 
     def crossover(self, parent1, parent2):
         if self.cross_type == self.crossover_type[1]:
-            return crossover.partially_matched(parent1, parent2)
+            return crossover.partially_matched(parent1, parent2)[0][0]
         elif self.cross_type == self.crossover_type[2]:
-            return crossover.edge_recombination(parent1, parent2)
+            return crossover.edge_recombination(parent1, parent2)[0]
         else:
             return crossover.ordered(self.keys, parent1, parent2)
 
@@ -337,7 +339,6 @@ class GA(base.MobileReleasePlanner):
         try:
             while not terminate_flag:
                 self.simulation += 1
-                self.proportion_population()
                 offspring = self.ga_operation()
                 score = self.evaluate(offspring)
                 if not self.exist(offspring):
@@ -366,7 +367,7 @@ def runner():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
     ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-            release_duration=14)
+            release_duration=14, cross_type='edge_recombination', select_type='tournament')
 
     best = ga.solve()
 
