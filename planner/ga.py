@@ -1,18 +1,29 @@
+import math
 import random
 
 import pandas as pd
 import numpy as np
 import copy
+import matplotlib.pyplot as plt
 
-from planner import base
+from planner import base, crossover
 from planner.lp import LP
 
 
 class GA(base.MobileReleasePlanner):
 
     def __init__(self, stakeholder_importance, release_relative_importance, release_duration, coupling=None,
-                 crossover_rate=0.1, mutation_rate=0.05):
+                 crossover_rate=0.1, mutation_rate=0.05, max_simulation=600, cross_type='ordered',
+                 select_type='fittest'):
 
+        self.crossover_type = ["ordered", "partially_matched", "edge_recombination"]
+        self.selection_type = ["fittest", "tournament", "proportionate"]
+        if cross_type not in self.crossover_type:
+            raise TypeError("Value types include: ", self.crossover_type)
+        if select_type not in self.selection_type:
+            raise TypeError("Value types include: ", self.selection_type)
+        self.cross_type = cross_type
+        self.select_type = select_type
         # seed: Initial seed solution
         # param m: Population of size
         self.seed = None
@@ -23,7 +34,7 @@ class GA(base.MobileReleasePlanner):
         self.mr = mutation_rate
         self.scored = None
         self.simulation = 0
-        self.max_simulation = 1000
+        self.max_simulation = max_simulation
 
         super(GA, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
         self.features = self.features()
@@ -91,7 +102,7 @@ class GA(base.MobileReleasePlanner):
         fx = copy.copy(self.features)
         lp = LP(stakeholder_importance=self.stakeholder_importance,
                 release_relative_importance=self.release_relative_importance,
-                release_duration=self.release_duration, coupling=self.coupling, highest=False)
+                release_duration=self.release_duration, coupling=self.coupling)
         lp.assignment_function(fx)
 
         sorted_plan = sorted(lp.mobile_release_plan, key=lambda f: f[0])
@@ -125,7 +136,7 @@ class GA(base.MobileReleasePlanner):
         """
         return self.objective_function(self.get_mobile_plan_from_offspring(solution))
 
-    def select(self, index=0):
+    def select_fittest(self, index=0):
         """
         Get fittest chromosome
 
@@ -133,33 +144,45 @@ class GA(base.MobileReleasePlanner):
         """
         return self.scored[index][0]
 
-    def crossover(self, first_solution, second_solution):
-        """
-        Performs crossover operation on chromosomes. The crossover operator takes two parents,
-        randomly selects items in one parent and fixes their place in the second parent
+    def proportionate_select(self):
+        """Select a member of the population in a fitness-proportionate way."""
+        number = random.random()
+        for ticket in self.scored:
+            if number < ticket[2]:
+                return ticket[0]
 
-        :param first_solution: A solution
-        :param second_solution: A solution
-        :return: Performs crossover on first and second solutions at crossover rate cr.
-        """
-        size = len(self.keys)
-        [fp1, fp2] = random.sample(range(0, size), 2)
+        raise Exception("Failed to select a parent. Begin troubleshooting by "
+                        "checking your fitness function.")
 
-        key1 = first_solution[fp1]
-        key2 = first_solution[fp2]
+    def tournament_select(self):
+        """Return the best genotype found in a random sample."""
+        sample_size = int(math.ceil(self.seed * 0.02))
+        tournament_size = sample_size
 
-        offspring = []
-        for index, key in enumerate(second_solution):
-            if index == fp1:
-                offspring.append(key1)
-                continue
-            if index == fp2:
-                offspring.append(key2)
-                continue
-            else:
-                offspring.append(first_solution[index])
+        pop = [random.choice(self.seed)
+               for _ in range(0, tournament_size)]
 
-        return offspring
+        scored = [(geno, self.evaluate(geno)) for geno in pop]
+        scored.sort(key=lambda n: n[1])
+        scored.reverse()
+
+        return scored[0][0]
+
+    def select(self, index=0):
+        if self.select_type == self.selection_type[2]:
+            return self.proportionate_select()
+        elif self.select_type == self.selection_type[1]:
+            return self.tournament_select()
+        else:
+            return self.select_fittest(index=index)
+
+    def crossover(self, parent1, parent2):
+        if self.cross_type == self.crossover_type[1]:
+            return crossover.partially_matched(parent1, parent2)
+        elif self.cross_type == self.crossover_type[2]:
+            return crossover.edge_recombination(parent1, parent2)
+        else:
+            return crossover.ordered(self.keys, parent1, parent2)
 
     def mutation(self, solution):
         """
@@ -268,8 +291,11 @@ class GA(base.MobileReleasePlanner):
         """
         parent1 = self.select()
         parent2 = self.select(index=1)
-        offspring_from_cr = self.crossover(parent1, parent2)
-        offspring_from_mr = self.mutation(offspring_from_cr)
+        if random.random() < self.cr:
+            offspring = self.crossover(parent1, parent2)
+        else:
+            offspring = self.select()
+        offspring_from_mr = self.mutation(offspring)
         if self.is_valid(offspring_from_mr):
             return offspring_from_mr
         else:
@@ -313,7 +339,7 @@ class GA(base.MobileReleasePlanner):
                 self.simulation += 1
                 self.proportion_population()
                 offspring = self.ga_operation()
-                # score = self.evaluate(offspring)
+                score = self.evaluate(offspring)
                 if not self.exist(offspring):
                     self.seed.append(offspring)
                     self.cull()
@@ -321,6 +347,19 @@ class GA(base.MobileReleasePlanner):
         except KeyboardInterrupt:
             pass
         return self.max()
+
+    @staticmethod
+    def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title):
+        plt.style.use('seaborn-whitegrid')
+
+        plt.plot(x_axis_data, y_axis_data)
+
+        plt.xlabel(x_axis_name)
+        plt.ylabel(y_axis_name)
+
+        plt.title(title)
+
+        plt.show()
 
 
 def runner():

@@ -5,12 +5,20 @@ import pandas as pd
 
 class MobileReleasePlanner(object):
 
-    def __init__(self, stakeholder_importance=(5, 5), release_relative_importance=(0.3, 0.3, 0.3),
+    def __init__(self, stakeholder_importance, release_relative_importance,
                  release_duration=14, coupling=None):
+        if len(release_relative_importance) != 3:
+            raise AttributeError("Pass a tuple of size 3 containing the each release importance!")
+        if len(stakeholder_importance) != 2:
+            raise AttributeError("Pass a tuple of size 2 containing the each stakeholders importance!")
         if coupling is None:
             coupling = {}
-        self.stakeholder_importance = stakeholder_importance
+        if stakeholder_importance is None:
+            self.stakeholder_importance = (5, 5)
+        if release_relative_importance is None:
+            self.release_relative_importance = (0.3, 0.3, 0.3)
         self.release_relative_importance = release_relative_importance
+        self.stakeholder_importance = stakeholder_importance
         self.number_of_releases = 3
         self.effort_release_1 = 0.0
         self.effort_release_2 = 0.0
