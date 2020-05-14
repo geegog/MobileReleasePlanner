@@ -220,3 +220,21 @@ class MobileReleasePlanner(object):
             _, score, key, description, effort = feature_array[index]
             return add_to_release, score, key, description, effort
         return feature_array[index]
+
+    @staticmethod
+    def get_max_was(feature_array, add_to_release=None):
+        """
+        Selects highest WAS.
+
+        :param feature_array: WAS options
+        :param add_to_release: Specify a release to add this feature
+        :return: Highest WAS.
+        """
+        selection = (0, 0, 0, "", 0)
+        for (release, weight, feature_key, feature, effort_estimation) in feature_array:
+            if weight > selection[1]:
+                selection = (release, weight, feature_key, feature, effort_estimation)
+        if add_to_release is not None:
+            _, score, key, description, effort = selection
+            return add_to_release, score, key, description, effort
+        return selection

@@ -16,20 +16,6 @@ class LP(base.MobileReleasePlanner):
 
         super(LP, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
 
-    @staticmethod
-    def get_max_was(feature_array):
-        """
-        Selects highest WAS.
-
-        :param feature_array: WAS options
-        :return: Highest WAS.
-        """
-        selection = (0, 0, 0, "", 0)
-        for (release, weight, feature_key, feature, effort_estimation) in feature_array:
-            if weight > selection[1]:
-                selection = (release, weight, feature_key, feature, effort_estimation)
-        return selection
-
     def assignment_function(self, array_was_feature):
         """
         Greedy function for feature assignment.

@@ -156,7 +156,7 @@ class GA(base.MobileReleasePlanner):
 
     def tournament_select(self):
         """Return the best genotype found in a random sample."""
-        sample_size = int(math.ceil(self.m * 0.02))
+        sample_size = int(math.ceil(self.m * 0.2))
         tournament_size = sample_size
 
         pop = [random.choice(self.seed)
@@ -170,12 +170,10 @@ class GA(base.MobileReleasePlanner):
 
     def select(self, index=0):
         if self.select_type == self.selection_type[2]:
-            self.proportion_population()
             return self.proportionate_select()
         elif self.select_type == self.selection_type[1]:
             return self.tournament_select()
         else:
-            self.proportion_population()
             return self.select_fittest(index=index)
 
     def crossover(self, parent1, parent2):
@@ -275,8 +273,8 @@ class GA(base.MobileReleasePlanner):
                 plan.append(self.get_feature_was(3, key))
                 effort_release_3 += effort
             else:
-                plan.append(self.get_random_was([f_list for f_list in self.features if f_list[0][2] == key][0],
-                                                add_to_release=4))
+                plan.append(self.get_max_was([f_list for f_list in self.features if f_list[0][2] == key][0],
+                                             add_to_release=4))
         return plan
 
     def get_feature_was(self, release, key):
@@ -291,6 +289,8 @@ class GA(base.MobileReleasePlanner):
 
         :return: A valid solution
         """
+        if self.select_type == 'fittest' or self.select_type == 'proportionate':
+            self.proportion_population()
         parent1 = self.select()
         parent2 = self.select(index=1)
         if random.random() < self.cr:
@@ -331,6 +331,7 @@ class GA(base.MobileReleasePlanner):
         :return: Solution in population P that has the highest fitness score.
         """
         best = self.scored[0]
+        self.mobile_release_plan.append(self.get_mobile_plan_from_offspring(best[0]))
         return best
 
     def solve(self):
@@ -367,11 +368,11 @@ def runner():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
     ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-            release_duration=14, cross_type='edge_recombination', select_type='tournament')
+            release_duration=14, cross_type='edge_recombination', select_type='fittest', max_simulation=10)
 
     best = ga.solve()
 
-    print(ga.get_mobile_plan_from_offspring(best[0]))
+    print(ga.mobile_release_plan)
     print(ga.objective_function(ga.mobile_release_plan))
     print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
