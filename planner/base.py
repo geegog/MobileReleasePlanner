@@ -100,7 +100,7 @@ class MobileReleasePlanner(object):
         return was
 
     @staticmethod
-    def objective_function(was):
+    def objective_function(was, exclude_postponed=False):
         """
         An additive function exists in which the total objective function value is determined
         as the sum of the weighted average satisfaction WAS(i, k) of stakeholder priorities for
@@ -109,11 +109,14 @@ class MobileReleasePlanner(object):
         Note: We consider a solution to be sufficiently good (or qualified) if it achieves
         at least 95 percent of the maximum objective function value.
 
+        :param exclude_postponed: Exclude postponed was
         :param was: all WAS score of features for release plan (x)
         :return: Objective function score.
         """
         fitness = 0.0
-        for _, value, _, _, _ in was:
+        for release, value, _, _, _ in was:
+            if exclude_postponed and release == 4:
+                continue
             fitness += value
         return fitness
 

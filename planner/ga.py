@@ -102,7 +102,7 @@ class GA(base.MobileReleasePlanner):
         fx = copy.copy(self.features)
         lp = LP(stakeholder_importance=self.stakeholder_importance,
                 release_relative_importance=self.release_relative_importance,
-                release_duration=self.release_duration, coupling=self.coupling)
+                release_duration=self.release_duration, coupling=self.coupling, highest=False)
         lp.assignment_function(fx)
 
         sorted_plan = sorted(lp.mobile_release_plan, key=lambda f: f[0])
@@ -331,7 +331,9 @@ class GA(base.MobileReleasePlanner):
         :return: Solution in population P that has the highest fitness score.
         """
         best = self.scored[0]
-        self.mobile_release_plan.append(self.get_mobile_plan_from_offspring(best[0]))
+        for f in self.get_mobile_plan_from_offspring(best[0]):
+            self.increase_effort(f[0], f[4])
+            self.mobile_release_plan.append(f)
         return best
 
     def solve(self):

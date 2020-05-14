@@ -102,7 +102,7 @@ def runner():
     lp.assignment_function(features)
 
     print(lp.mobile_release_plan)
-    print(lp.objective_function(lp.mobile_release_plan))
+    print(lp.objective_function(lp.mobile_release_plan, exclude_postponed=True))
     print(lp.effort_release_1, lp.effort_release_2, lp.effort_release_3)
 
 
