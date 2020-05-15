@@ -470,8 +470,8 @@ class GA(base.MobileReleasePlanner):
             pass
         return self.max()
 
-    @staticmethod
-    def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title):
+
+def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title):
         """
         Plots a graph
 
@@ -501,14 +501,32 @@ class GA(base.MobileReleasePlanner):
 def main():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
-    ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-            release_duration=14, cross_type='edge_recombination', select_type='fittest', max_simulation=10)
+    generations = [i for i in range(2, 100) if i % 2 != 0]
+    iterations = [i for i in range(1, 1000) if i % 2 == 0]
+    fitness_scores_generation = []
+    fitness_scores_iteration = []
 
-    ga.solve()
+    for size in generations:
+        ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
+                release_duration=14, cross_type='ordered', select_type='tournament', population_size=size)
+        result = ga.solve()
+        fitness_scores_generation.append(result[1])
+        # print(ga.mobile_release_plan)
+        # print(ga.objective_function(ga.mobile_release_plan))
+        # print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
-    print(ga.mobile_release_plan)
-    print(ga.objective_function(ga.mobile_release_plan))
-    print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
+    plot_data(generations, fitness_scores_generation, "Generations", "Fitness Scores", "Fitness Function")
+
+    for i in iterations:
+        ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
+                release_duration=14, cross_type='ordered', select_type='tournament', max_simulation=i)
+        result = ga.solve()
+        fitness_scores_iteration.append(result[1])
+        # print(ga.mobile_release_plan)
+        # print(ga.objective_function(ga.mobile_release_plan))
+        # print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
+
+    plot_data(iterations, fitness_scores_iteration, "Iterations", "Fitness Scores", "Fitness Function")
 
 
 if __name__ == "__main__":
