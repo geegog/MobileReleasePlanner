@@ -6,9 +6,12 @@ def ordered(keys, first_solution, second_solution):
     Performs crossover operation on chromosomes. The crossover operator takes two parents,
     randomly selects items in one parent and fixes their place in the second parent
 
+    :type keys: list
     :param keys: Feature unique key list
     :param first_solution: A solution
+    :type first_solution: list
     :param second_solution: A solution
+    :type second_solution: list
     :return: Performs crossover on first and second solutions at crossover rate cr.
     """
     size = len(keys)

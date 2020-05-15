@@ -7,9 +7,29 @@ from planner import base
 
 
 class LP(base.MobileReleasePlanner):
+    """Mobile Release Planning using Linear Programming."""
 
     def __init__(self, stakeholder_importance=None, release_relative_importance=None, release_duration=None,
                  coupling=None, highest=True):
+
+        """
+        Initialize a genetic algorithm.
+
+        :type stakeholder_importance:(int, int)
+        :param stakeholder_importance (tuple): Stakeholders importance.
+
+        :type release_relative_importance: (float, float, float)
+        :param release_relative_importance: Release relative importance.
+
+        :type release_duration : int
+        :param release_duration: Release duration.
+
+        :type coupling: {(str, str)}
+        :param coupling: Coupled features.
+
+        :type highest: bool
+        :param highest: Flag specified if feature should be chosen randomly or based on the highest WAS.
+        """
 
         self.delete_flag = False
         self.highest = highest
@@ -20,6 +40,7 @@ class LP(base.MobileReleasePlanner):
         """
         Greedy function for feature assignment.
 
+        :type array_was_feature: list
         :param array_was_feature: Release and WAS for a feature
         """
 
@@ -55,10 +76,15 @@ class LP(base.MobileReleasePlanner):
         Assigns a feature to a mobile release plan or put in not feasible list if not feasible in current plan.
 
         :param max_feature: Feature with highest WAS
+        :type max_feature: list
         :param feature_array: Feature details
+        :type feature_array: list
         :param total_effort: Total effort estimate of coupled features
+        :type total_effort: float
         :param couple: Feature partner (couple)
+        :type couple: tuple
         :param couple_array: Couple details
+        :type couple_array: list
         """
 
         if self.can_assign_to_release(self.effort_release_1, max_feature[4], total_effort):
@@ -87,7 +113,7 @@ class LP(base.MobileReleasePlanner):
                 self.append_to_release(4, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
 
 
-def runner():
+def main():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
     lp = LP(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.3, 0.0, 0.7),
@@ -106,4 +132,5 @@ def runner():
     print(lp.effort_release_1, lp.effort_release_2, lp.effort_release_3)
 
 
-runner()
+if __name__ == "__main__":
+    main()

@@ -4,9 +4,26 @@ import pandas as pd
 
 
 class MobileReleasePlanner(object):
+    """Mobile Release Planning base."""
 
     def __init__(self, stakeholder_importance, release_relative_importance,
                  release_duration=14, coupling=None):
+        """
+        Initialize a genetic algorithm.
+
+        :type stakeholder_importance:(int, int)
+        :param stakeholder_importance (tuple): Stakeholders importance.
+
+        :type release_relative_importance: (float, float, float)
+        :param release_relative_importance: Release relative importance.
+
+        :type release_duration : int
+        :param release_duration: Release duration.
+
+        :type coupling: {(str, str)}
+        :param coupling: Coupled features.
+        """
+
         if len(release_relative_importance) != 3:
             raise AttributeError("Pass a tuple of size 3 containing the each release importance!")
         if len(stakeholder_importance) != 2:
@@ -66,8 +83,11 @@ class MobileReleasePlanner(object):
         Stakeholders priorities.
 
         :param stakeholder_importance: Stakeholders' importance
+        :type stakeholder_importance: tuple
         :param value_on_feature: Stakeholders' value placed on feature(i)
+        :type value_on_feature: int
         :param urgency_on_feature: Stakeholders' urgency placed on feature(i)
+        :type urgency_on_feature: int
         :return: Product of Stakeholders' importance, value, and urgency.
         """
         return stakeholder_importance * value_on_feature * urgency_on_feature
@@ -78,7 +98,9 @@ class MobileReleasePlanner(object):
         Stakeholders' urgency on a release.
 
         :param vector: Urgency vector of feature(i)
+        :type vector: str
         :param release: Release
+        :type release: int
         :return: Urgency placed by stakeholder on release(r).
         """
         vector_tuple = tuple(
@@ -92,6 +114,7 @@ class MobileReleasePlanner(object):
         the two dimensions of prioritization (stakeholder priorities).
 
         :param scores: Value of assigning feature(i) to release(r) for each stakeholder
+        :type scores: list
         :return: Weighted Average Satisfaction(was) of assigning feature(i) to release(r).
         """
         was = 0.0
@@ -110,7 +133,9 @@ class MobileReleasePlanner(object):
         at least 95 percent of the maximum objective function value.
 
         :param exclude_postponed: Exclude postponed was
+        :type exclude_postponed: bool
         :param was: all WAS score of features for release plan (x)
+        :type was: list
         :return: Objective function score.
         """
         fitness = 0.0
@@ -125,8 +150,11 @@ class MobileReleasePlanner(object):
         Assigns a feature to a mobile release plan or put in not feasible list if not feasible in current plan.
 
         :param current_total_effort_of_release: Current sum of effort in a release
+        :type current_total_effort_of_release: float
         :param total_effort: Total effort estimate of coupled features
+        :type total_effort: float
         :param effort_estimate: Estimate of a feature
+        :type effort_estimate: float
 
         :return Sum of effort in a release
         """
@@ -141,7 +169,9 @@ class MobileReleasePlanner(object):
         Sum of two estimate values.
 
         :param effort_estimate_1: First effort estimate
+        :type effort_estimate_1: float
         :param effort_estimate_2: Second effort estimate
+        :type effort_estimate_2: float
         :return: Sum of two estimate values.
         """
         return effort_estimate_1 + effort_estimate_2
@@ -151,11 +181,17 @@ class MobileReleasePlanner(object):
         Appends selected feature to mobile release plan.
 
         :param couple: Coupled feature
+        :type couple: tuple
         :param release: Release number
+        :type release: int
         :param weight: WAS
+        :type weight: float
         :param feature_key: Feature unique identifier
-        :param feature: Feature number
+        :type feature_key: str
+        :param feature: Feature key
+        :type feature: str
         :param effort_estimation: Effort estimate
+        :type effort_estimation: float
         """
 
         if couple is not None:
@@ -171,7 +207,9 @@ class MobileReleasePlanner(object):
         Increase effort of a release.
 
         :param release: Release number
+        :type release: int
         :param effort_estimation: Effort estimation
+        :type effort_estimation: float
         """
 
         if release == 1:
@@ -186,6 +224,7 @@ class MobileReleasePlanner(object):
         Get other couple of a feature.
 
         :param feature_key: Feature unique identifier
+        :type feature_key: str
         :return: Number of the feature's partner.
         """
         coupled_with = None
@@ -197,10 +236,15 @@ class MobileReleasePlanner(object):
         return coupled_with
 
     def features(self):
+        """
+        All feature with calculate was
+
+        :returns: Feature set with calculate was
+        """
         self.calculate_was_for_all_features()
 
         rows = []
-        features = self.results[0]
+        # features = self.results[0]
         release_1_object_score = self.results[1]
         release_2_object_score = self.results[2]
         release_3_object_score = self.results[3]
@@ -215,7 +259,9 @@ class MobileReleasePlanner(object):
         Selects a WAS.
 
         :param add_to_release: Specify a release to add this feature
+        :type add_to_release: int
         :param feature_array: WAS options
+        :type feature_array: list
         :return: Any WAS.
         """
         index = random.randint(0, 2)
@@ -230,7 +276,9 @@ class MobileReleasePlanner(object):
         Selects highest WAS.
 
         :param feature_array: WAS options
+        :type feature_array: list
         :param add_to_release: Specify a release to add this feature
+        :type add_to_release: int
         :return: Highest WAS.
         """
         selection = (0, 0, 0, "", 0)

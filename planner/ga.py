@@ -11,10 +11,44 @@ from planner.lp import LP
 
 
 class GA(base.MobileReleasePlanner):
+    """Mobile Release Planning using Genetics Algorithm."""
 
     def __init__(self, stakeholder_importance, release_relative_importance, release_duration, coupling=None,
                  crossover_rate=0.1, mutation_rate=0.05, max_simulation=600, cross_type='ordered',
                  select_type='fittest', population_size=50):
+        """
+        Initialize a genetic algorithm.
+
+        :type stakeholder_importance:(int, int)
+        :param stakeholder_importance (tuple): Stakeholders importance.
+
+        :type release_relative_importance: (float, float, float)
+        :param release_relative_importance: Release relative importance.
+
+        :type release_duration : int
+        :param release_duration: Release duration.
+
+        :type coupling: {(str, str)}
+        :param coupling: Coupled features.
+
+        :type crossover_rate: float
+        :param crossover_rate: Crossover rate.
+
+        :type mutation_rate: float
+        :param mutation_rate: Mutation rate.
+
+        :type max_simulation: int
+        :param max_simulation: Number of iterations.
+
+        :type cross_type: str
+        :param cross_type: "ordered" or "partially_matched" or "edge_recombination"
+
+        :type select_type: str
+        :param select_type: "fittest" or "tournament" or "proportionate"
+
+        :type population_size: int
+        :param population_size (int): Population size.
+        """
 
         self.crossover_type = ["ordered", "partially_matched", "edge_recombination"]
         self.selection_type = ["fittest", "tournament", "proportionate"]
@@ -40,6 +74,9 @@ class GA(base.MobileReleasePlanner):
         self.features = self.features()
 
     def ranked(self):
+        """
+        Rank scored population
+        """
         self.scored.sort(key=lambda n: n[1])
         self.scored.reverse()
 
@@ -116,12 +153,26 @@ class GA(base.MobileReleasePlanner):
 
     @staticmethod
     def chromosome(sorted_plan):
+        """
+        Get a chromosome
+
+        :type sorted_plan: list
+        :param sorted_plan: A sorted release plan
+        :returns: A chromosome
+        """
         features = []
         for release, was, key, description, effort in sorted_plan:
             features.append(key)
         return features
 
     def exist(self, solution):
+        """
+        Checks if solution exists in population
+
+        :type solution: list
+        :param solution: A chromosome
+        :returns: True or False
+        """
         for s in self.seed:
             if s == solution:
                 return True
@@ -131,6 +182,7 @@ class GA(base.MobileReleasePlanner):
         """
         Get fitness score of chromosome
 
+        :type solution: list
         :param solution: A chromosome
         :return: Provides a fitness score for a given solution
         """
@@ -140,6 +192,8 @@ class GA(base.MobileReleasePlanner):
         """
         Get fittest chromosome
 
+        :type index: int
+        :param index: Index
         :return: Chooses based on fitness score, a parent for the crossover operation.
         """
         return self.scored[index][0]
@@ -169,6 +223,13 @@ class GA(base.MobileReleasePlanner):
         return self.scored[0][0]
 
     def select(self, index=0):
+        """
+        Perform a selection (proportionate or tournament or edge fittest)
+
+        :type index: int
+        :param index: Index to get offspring from (applies only to fittest selection)
+        :returns: Offspring
+        """
         if self.select_type == self.selection_type[2]:
             return self.proportionate_select()
         elif self.select_type == self.selection_type[1]:
@@ -177,6 +238,16 @@ class GA(base.MobileReleasePlanner):
             return self.select_fittest(index=index)
 
     def crossover(self, parent1, parent2):
+        """
+        Perform a crossover (ordered or partially matched or edge recombination)
+
+        :param parent1: Parent 2
+        :type parent1: list
+
+        :param parent2: Parent 2
+        :type parent2: list
+        :returns: Offspring
+        """
         if self.cross_type == self.crossover_type[1]:
             return crossover.partially_matched(parent1, parent2)[0][0]
         elif self.cross_type == self.crossover_type[2]:
@@ -189,6 +260,7 @@ class GA(base.MobileReleasePlanner):
         Performs crossover operation on chromosomes. Random swapping of items in the
         new offspring. The number of swaps is proportional to the mutation rate.
 
+        :type solution: list
         :param solution: A solution
         :return: Performs mutation on solution at mutation rate mr.
         """
@@ -213,6 +285,7 @@ class GA(base.MobileReleasePlanner):
         Check if solution meets constraints
 
         :param solution: A solution
+        :type solution: list
         :return: Checks validity of solution against the user-defined constraints
         """
         validity_check = []
@@ -241,6 +314,14 @@ class GA(base.MobileReleasePlanner):
         return not (False in validity_check)
 
     def is_in_release(self, mr, couple):
+        """
+        Check if couples are both in the same release
+
+        :param couple: Feature couple
+        :type couple: tuple
+        :param mr: Mobile Release Plan
+        :type mr: list
+        """
         for r in mr:
             if r[2] == couple[0]:
                 return self.is_feature_in_release(mr, couple[1])
@@ -249,6 +330,15 @@ class GA(base.MobileReleasePlanner):
 
     @staticmethod
     def is_feature_in_release(mr, feature):
+        """
+        Check if feature is in a release
+
+        :param feature: Feature key
+        :type feature: str
+        :param mr: Mobile Release Plan
+        :type mr: list
+        :return: True or False.
+        """
         is_present = False
         for r in mr:
             if r[2] == feature:
@@ -256,6 +346,13 @@ class GA(base.MobileReleasePlanner):
         return is_present
 
     def get_mobile_plan_from_offspring(self, solution):
+        """
+        Get mobile release plan from encoded release
+
+        :param solution: Feature key
+        :type solution: list
+        :return: Mobile Release Plan.
+        """
         effort_release_1 = 0.0
         effort_release_2 = 0.0
         effort_release_3 = 0.0
@@ -278,9 +375,25 @@ class GA(base.MobileReleasePlanner):
         return plan
 
     def get_feature_was(self, release, key):
+        """
+        Get feature WAS
+
+        :param key: Feature key
+        :type key: str
+        :param release: Release number
+        :type release: int
+        :return: WAS.
+        """
         return [f_tuple for f_tuple in self.results[release] if f_tuple[2] == key][0]
 
     def get_feature_effort_index(self, key):
+        """
+        Get feature effort estimation
+
+        :param key: Feature key
+        :type key: str
+        :return: Estimated effort to implement feature.
+        """
         return self.keys.index(key)
 
     def ga_operation(self):
@@ -337,6 +450,11 @@ class GA(base.MobileReleasePlanner):
         return best
 
     def solve(self):
+        """
+        Solve mobile release planning problem
+
+        :return: Returns best plan.
+        """
         self.new_population()
         terminate_flag = False
         try:
@@ -354,6 +472,20 @@ class GA(base.MobileReleasePlanner):
 
     @staticmethod
     def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title):
+        """
+        Plots a graph
+
+        :param x_axis_data: Data on X-Axis
+        :type x_axis_data: list
+        :param y_axis_data: Data on Y-Axis
+        :type y_axis_data: list
+        :param x_axis_name: Name of X-Axis
+        :type x_axis_name: str
+        :param y_axis_name: Name of Y-Axis
+        :type y_axis_name: str
+        :param title: Graph title
+        :type title: str
+        """
         plt.style.use('seaborn-whitegrid')
 
         plt.plot(x_axis_data, y_axis_data)
@@ -366,17 +498,18 @@ class GA(base.MobileReleasePlanner):
         plt.show()
 
 
-def runner():
+def main():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
     ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
             release_duration=14, cross_type='edge_recombination', select_type='fittest', max_simulation=10)
 
-    best = ga.solve()
+    ga.solve()
 
     print(ga.mobile_release_plan)
     print(ga.objective_function(ga.mobile_release_plan))
     print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
 
-runner()
+if __name__ == "__main__":
+    main()
