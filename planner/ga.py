@@ -1,5 +1,6 @@
 import math
 import random
+import time
 
 import pandas as pd
 import numpy as np
@@ -14,7 +15,7 @@ class GA(base.MobileReleasePlanner):
     """Mobile Release Planning using Genetics Algorithm."""
 
     def __init__(self, stakeholder_importance, release_relative_importance, release_duration, coupling=None,
-                 crossover_rate=0.1, mutation_rate=0.05, max_simulation=600, cross_type='ordered',
+                 crossover_rate=0.1, mutation_rate=0.05, max_cycles=600, cross_type='ordered',
                  select_type='fittest', population_size=50):
         """
         Initialize a genetic algorithm.
@@ -37,8 +38,8 @@ class GA(base.MobileReleasePlanner):
         :type mutation_rate: float
         :param mutation_rate: Mutation rate.
 
-        :type max_simulation: int
-        :param max_simulation: Number of iterations.
+        :type max_cycles: int
+        :param max_cycles: Number of iterations.
 
         :type cross_type: str
         :param cross_type: "ordered" or "partially_matched" or "edge_recombination"
@@ -67,8 +68,10 @@ class GA(base.MobileReleasePlanner):
         # param mr: Mutation Rate
         self.mr = mutation_rate
         self.scored = None
-        self.simulation = 0
-        self.max_simulation = max_simulation
+        self.cycles = 0
+        self.start = None
+        self.end = None
+        self.max_cycles = max_cycles
 
         super(GA, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
         self.features = self.features()
@@ -210,7 +213,7 @@ class GA(base.MobileReleasePlanner):
 
     def tournament_select(self):
         """Return the best genotype found in a random sample."""
-        sample_size = int(math.ceil(self.m * 0.2))
+        sample_size = int(math.ceil(self.m * 0.02))
         tournament_size = sample_size
 
         pop = [random.choice(self.seed)
@@ -249,7 +252,7 @@ class GA(base.MobileReleasePlanner):
         :returns: Offspring
         """
         if self.cross_type == self.crossover_type[1]:
-            return crossover.partially_matched(parent1, parent2)[0][0]
+            return crossover.partially_matched(parent1, parent2)[0]
         elif self.cross_type == self.crossover_type[2]:
             return crossover.edge_recombination(parent1, parent2)[0]
         else:
@@ -402,19 +405,22 @@ class GA(base.MobileReleasePlanner):
 
         :return: A valid solution
         """
-        if self.select_type == 'fittest' or self.select_type == 'proportionate':
-            self.proportion_population()
-        parent1 = self.select()
-        parent2 = self.select(index=1)
-        if random.random() < self.cr:
-            offspring = self.crossover(parent1, parent2)
-        else:
-            offspring = self.select()
-        offspring_from_mr = self.mutation(offspring)
-        if self.is_valid(offspring_from_mr):
-            return offspring_from_mr
-        else:
-            return self.ga_operation()
+        offspring_from_mr = None
+        terminator = True
+        while terminator:
+            if self.select_type == 'fittest' or self.select_type == 'proportionate':
+                self.proportion_population()
+            parent1 = self.select()
+            parent2 = self.select(index=1)
+            if random.random() < self.cr:
+                offspring = self.crossover(parent1, parent2)
+            else:
+                offspring = self.select()
+            offspring_from_mr = self.mutation(offspring)
+            if self.is_valid(offspring_from_mr):
+                terminator = False
+
+        return offspring_from_mr
 
     def cull(self):
         """
@@ -435,7 +441,14 @@ class GA(base.MobileReleasePlanner):
 
         :return: True or False
         """
-        return self.simulation >= self.max_simulation
+        if len(self.scored) >= 50:
+            number_of_optimal_solutions_to_observer = int(math.ceil(0.3 * len(self.scored)))
+            if self.scored[0][1] == self.scored[number_of_optimal_solutions_to_observer][1]:
+                return True
+            else:
+                return False
+
+        return self.cycles >= self.max_cycles
 
     def max(self):
         """
@@ -455,11 +468,12 @@ class GA(base.MobileReleasePlanner):
 
         :return: Returns best plan.
         """
+        self.start = time.process_time()
         self.new_population()
         terminate_flag = False
         try:
             while not terminate_flag:
-                self.simulation += 1
+                self.cycles += 1
                 offspring = self.ga_operation()
                 score = self.evaluate(offspring)
                 if not self.exist(offspring):
@@ -468,65 +482,133 @@ class GA(base.MobileReleasePlanner):
                 terminate_flag = self.check_termination()
         except KeyboardInterrupt:
             pass
+        self.end = time.process_time()
         return self.max()
 
 
-def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title):
-        """
-        Plots a graph
+def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
+              select_type, cross_type, cr_rate, mr_rate, cycles=None, processing_time=None, fitness=None, scatter=False):
+    """
+    Plots a graph
 
-        :param x_axis_data: Data on X-Axis
-        :type x_axis_data: list
-        :param y_axis_data: Data on Y-Axis
-        :type y_axis_data: list
-        :param x_axis_name: Name of X-Axis
-        :type x_axis_name: str
-        :param y_axis_name: Name of Y-Axis
-        :type y_axis_name: str
-        :param title: Graph title
-        :type title: str
-        """
-        plt.style.use('seaborn-whitegrid')
+    :param processing_time: Processing time
+    :type processing_time: float
+    :param cycles: Number of iterations to reach optimal solution
+    :type cycles: int
+    :param fitness: Score
+    :type fitness: float
+    :param mr_rate: Mutation rate
+    :type mr_rate: float
+    :param cr_rate: Crossover rate
+    :type cr_rate: float
+    :param cross_type: Crossover strategy
+    :type cross_type: str
+    :param select_type: Selection strategy
+    :type select_type: str
+    :param scatter: Set true to use scattered plot
+    :type scatter: bool
+    :param x_axis_data: Data on X-Axis
+    :type x_axis_data: list
+    :param y_axis_data: Data on Y-Axis
+    :type y_axis_data: list
+    :param x_axis_name: Name of X-Axis
+    :type x_axis_name: str
+    :param y_axis_name: Name of Y-Axis
+    :type y_axis_name: str
+    :param title: Graph title
+    :type title: str
+    """
+    plt.style.use('seaborn-whitegrid')
 
+    if scatter:
+        plt.scatter(x_axis_data, y_axis_data, marker="1")
+    else:
         plt.plot(x_axis_data, y_axis_data)
 
-        plt.xlabel(x_axis_name)
-        plt.ylabel(y_axis_name)
+    plt.xlabel(x_axis_name)
+    plt.ylabel(y_axis_name)
 
-        plt.title(title)
+    plt.title(title)
 
-        plt.show()
+    plt.figtext(.8, .60, "mr rate: " + str(mr_rate), color="red")
+    plt.figtext(.8, .57, "cr rate: " + str(cr_rate), color="red")
+    plt.figtext(.8, .54, "se: " + str(select_type), color="red")
+    plt.figtext(.8, .51, "cr: " + str(cross_type), color="red")
+    if cycles is not None:
+        plt.figtext(.8, .48, "cycles: " + str(cycles), color="red")
+    if processing_time is not None:
+        plt.figtext(.8, .45, "t: " + str(processing_time), color="red")
+    if fitness is not None:
+        plt.figtext(.8, .42, "fitness: " + str(fitness), color="red")
+
+    plt.show()
 
 
-def main():
-    coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
-
-    generations = [i for i in range(2, 100) if i % 2 != 0]
-    iterations = [i for i in range(1, 1000) if i % 2 == 0]
+def exp1(coupling, cross_type, select_type):
+    generations = [i for i in range(10, 110, 10)]
     fitness_scores_generation = []
-    fitness_scores_iteration = []
 
     for size in generations:
         ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-                release_duration=14, cross_type='ordered', select_type='tournament', population_size=size)
+                release_duration=14, cross_type=cross_type, select_type=select_type, population_size=size)
         result = ga.solve()
         fitness_scores_generation.append(result[1])
         # print(ga.mobile_release_plan)
         # print(ga.objective_function(ga.mobile_release_plan))
         # print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
-    plot_data(generations, fitness_scores_generation, "Generations", "Fitness Scores", "Fitness Function")
+    plot_data(generations, fitness_scores_generation, "Generations", "Fitness Scores",
+              "Fitness Function", cross_type=cross_type, select_type=select_type,
+              mr_rate=0.3, cr_rate=0.2, scatter=True)
 
-    for i in iterations:
-        ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-                release_duration=14, cross_type='ordered', select_type='tournament', max_simulation=i)
-        result = ga.solve()
-        fitness_scores_iteration.append(result[1])
-        # print(ga.mobile_release_plan)
-        # print(ga.objective_function(ga.mobile_release_plan))
-        # print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
-    plot_data(iterations, fitness_scores_iteration, "Iterations", "Fitness Scores", "Fitness Function")
+def exp2(coupling, cross_type, select_type):
+    if "tournament" == select_type:
+        raise KeyError("Not supported for this type")
+
+    cr_rate = np.linspace(0.1, 1, 10)
+    mr_rate = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+    results = []
+
+    for cr in cr_rate:
+        for mr in mr_rate:
+            ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
+                    release_duration=14, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
+                    mutation_rate=mr)
+            ga.solve()
+
+            print(ga.mobile_release_plan)
+            print(ga.objective_function(ga.mobile_release_plan))
+            print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
+
+            tallies = [tally for _, _, tally in ga.scored]
+            scores = [score for _, score, _ in ga.scored]
+
+            # cross_type, select_type, fitness, mr, cr, cycles, time
+            results.append((cross_type, select_type, ga.objective_function(ga.mobile_release_plan), mr, cr, ga.cycles,
+                            ga.end - ga.start))
+            plot_data(sorted(tallies), sorted(scores), "Shared Score", "Fitness Scores",
+                      "Fitness Function", cross_type=cross_type, select_type=select_type,
+                      fitness=ga.objective_function(ga.mobile_release_plan), mr_rate=mr, cr_rate=cr,
+                      cycles=ga.cycles, processing_time=ga.end - ga.start)
+
+    results.sort(key=lambda s: s[2])
+    print(results)
+
+
+def main():
+    coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
+
+    # exp2(coupling, "ordered", "fittest")
+
+    # exp2(coupling, "ordered", "fittest")
+    exp2(coupling, "ordered", "proportionate")
+    #
+    # exp2(coupling, "partially_matched", "fittest")
+    # exp2(coupling, "partially_matched", "proportionate")
+    #
+    # exp2(coupling, "edge_recombination", "fittest")
+    # exp2(coupling, "edge_recombination", "proportionate")
 
 
 if __name__ == "__main__":

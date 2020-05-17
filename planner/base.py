@@ -58,7 +58,7 @@ class MobileReleasePlanner(object):
         Calculates WAS for all features.
 
         """
-        self.print()
+        # self.print()
         for k in range(0, self.number_of_releases):
             row = []
             for index, data in self.inputs.iterrows():
@@ -82,8 +82,8 @@ class MobileReleasePlanner(object):
         """
         Stakeholders priorities.
 
-        :param stakeholder_importance: Stakeholders' importance
-        :type stakeholder_importance: tuple
+        :param stakeholder_importance: A stakeholders importance
+        :type stakeholder_importance: int
         :param value_on_feature: Stakeholders' value placed on feature(i)
         :type value_on_feature: int
         :param urgency_on_feature: Stakeholders' urgency placed on feature(i)
@@ -143,7 +143,7 @@ class MobileReleasePlanner(object):
             if exclude_postponed and release == 4:
                 continue
             fitness += value
-        return fitness
+        return round(fitness, 2)
 
     def can_assign_to_release(self, current_total_effort_of_release, effort_estimate, total_effort=None):
         """
