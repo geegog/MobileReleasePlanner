@@ -213,7 +213,7 @@ class GA(base.MobileReleasePlanner):
 
     def tournament_select(self):
         """Return the best genotype found in a random sample."""
-        sample_size = int(math.ceil(self.m * 0.02))
+        sample_size = int(math.ceil(self.m * 0.2))
         tournament_size = sample_size
 
         pop = [random.choice(self.seed)
@@ -443,7 +443,7 @@ class GA(base.MobileReleasePlanner):
         """
         if len(self.scored) >= 50:
             number_of_optimal_solutions_to_observer = int(math.ceil(0.3 * len(self.scored)))
-            if self.scored[0][1] == self.scored[number_of_optimal_solutions_to_observer][1]:
+            if self.scored[0][1] == self.scored[number_of_optimal_solutions_to_observer][1] or self.cycles > 4000:
                 return True
             else:
                 return False
@@ -545,12 +545,13 @@ def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
 
 
 def exp1(coupling, cross_type, select_type):
-    generations = [i for i in range(10, 110, 10)]
+    generations = [i for i in range(10, 110, 5)]
     fitness_scores_generation = []
 
     for size in generations:
         ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-                release_duration=14, cross_type=cross_type, select_type=select_type, population_size=size)
+                release_duration=14, cross_type=cross_type, select_type=select_type, population_size=size,
+                mutation_rate=0.05, crossover_rate=0.9)
         result = ga.solve()
         fitness_scores_generation.append(result[1])
         # print(ga.mobile_release_plan)
@@ -559,12 +560,10 @@ def exp1(coupling, cross_type, select_type):
 
     plot_data(generations, fitness_scores_generation, "Generations", "Fitness Scores",
               "Fitness Function", cross_type=cross_type, select_type=select_type,
-              mr_rate=0.3, cr_rate=0.2, scatter=True)
+              mr_rate=0.05, cr_rate=0.9)
 
 
 def exp2(coupling, cross_type, select_type):
-    if "tournament" == select_type:
-        raise KeyError("Not supported for this type")
 
     cr_rate = np.linspace(0.1, 1, 10)
     mr_rate = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
@@ -581,16 +580,17 @@ def exp2(coupling, cross_type, select_type):
             print(ga.objective_function(ga.mobile_release_plan))
             print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
-            tallies = [tally for _, _, tally in ga.scored]
-            scores = [score for _, score, _ in ga.scored]
-
             # cross_type, select_type, fitness, mr, cr, cycles, time
             results.append((cross_type, select_type, ga.objective_function(ga.mobile_release_plan), mr, cr, ga.cycles,
                             ga.end - ga.start))
-            plot_data(sorted(tallies), sorted(scores), "Shared Score", "Fitness Scores",
-                      "Fitness Function", cross_type=cross_type, select_type=select_type,
-                      fitness=ga.objective_function(ga.mobile_release_plan), mr_rate=mr, cr_rate=cr,
-                      cycles=ga.cycles, processing_time=ga.end - ga.start)
+            if "tournament" != select_type:
+                tallies = [tally for _, _, tally in ga.scored]
+                scores = [score for _, score, _ in ga.scored]
+
+                plot_data(sorted(tallies), sorted(scores), "Shared Score", "Fitness Scores",
+                          "Fitness Function", cross_type=cross_type, select_type=select_type,
+                          fitness=ga.objective_function(ga.mobile_release_plan), mr_rate=mr, cr_rate=cr,
+                          cycles=ga.cycles, processing_time=ga.end - ga.start)
 
     results.sort(key=lambda s: s[2])
     print(results)
@@ -599,16 +599,19 @@ def exp2(coupling, cross_type, select_type):
 def main():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
-    # exp2(coupling, "ordered", "fittest")
+    exp1(coupling, "ordered", "tournament")
 
     # exp2(coupling, "ordered", "fittest")
-    exp2(coupling, "ordered", "proportionate")
+    # exp2(coupling, "ordered", "proportionate")
+    # exp2(coupling, "ordered", "tournament")
     #
     # exp2(coupling, "partially_matched", "fittest")
     # exp2(coupling, "partially_matched", "proportionate")
+    # exp2(coupling, "partially_matched", "tournament")
     #
     # exp2(coupling, "edge_recombination", "fittest")
     # exp2(coupling, "edge_recombination", "proportionate")
+    # exp2(coupling, "edge_recombination", "tournament")
 
 
 if __name__ == "__main__":

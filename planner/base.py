@@ -281,10 +281,8 @@ class MobileReleasePlanner(object):
         :type add_to_release: int
         :return: Highest WAS.
         """
-        selection = (0, 0, 0, "", 0)
-        for (release, weight, feature_key, feature, effort_estimation) in feature_array:
-            if weight > selection[1]:
-                selection = (release, weight, feature_key, feature, effort_estimation)
+        sorted_features = sorted(feature_array, key=lambda s: s[1])
+        selection = sorted_features[-1]
         if add_to_release is not None:
             _, score, key, description, effort = selection
             return add_to_release, score, key, description, effort
