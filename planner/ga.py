@@ -468,7 +468,7 @@ class GA(base.MobileReleasePlanner):
 
         :return: Returns best plan.
         """
-        self.start = time.process_time()
+        self.start = time.time()
         self.new_population()
         terminate_flag = False
         try:
@@ -482,7 +482,7 @@ class GA(base.MobileReleasePlanner):
                 terminate_flag = self.check_termination()
         except KeyboardInterrupt:
             pass
-        self.end = time.process_time()
+        self.end = time.time()
         return self.max()
 
 
