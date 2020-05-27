@@ -101,6 +101,33 @@ class SentenceClassification:
         feature_matrix = vec.fit_transform(feature_dicts)
         return feature_matrix, vec, class_labels
 
+    def classify_reviews(self):
+        classified_reviews = {}
+        feat_transform, model = self.model()
+        reviews = self.review_dataset
+        predictions = self.evaluate_model_on_test_set(reviews, model, feat_transform,
+                                                      is_actual_test_review=True)
+
+        predictions = predictions.tolist()
+
+        for index, row in reviews.iterrows():
+            review_dict = {
+                'review-id': row['reviewId'],
+                'class': predictions[index],
+                'username': row['userName'],
+                'review_sent': row['content'],
+                'score': row['score'],
+                'thumbs_up_count': row['thumbsUpCount'],
+                'review_created_version': row['reviewCreatedVersion'],
+                'comment_made_on': row['at'],
+                'reply_content': row['replyContent'],
+                'replied_at': row['repliedAt'],
+                'true_features': [],
+                'predicted_features': []
+            }
+            classified_reviews[index] = review_dict
+        return classified_reviews
+
 
 def evaluate():
     _start_time = time.time()
@@ -179,13 +206,8 @@ if __name__ == '__main__':
     # evaluate()
     start_time = time.time()
     sentence_classifier = SentenceClassification()
-    feat_transform, model = sentence_classifier.model()
-    reviews = sentence_classifier.review_dataset
-    predictions = sentence_classifier.evaluate_model_on_test_set(reviews, model, feat_transform,
-                                                                 is_actual_test_review=True)
+    cr = sentence_classifier.classify_reviews()
 
-    for index, pred in enumerate(predictions.tolist()):
-        reviews.at[index, 'class'] = pred
+    end_time = time.time()
 
-    reviews.to_csv('../data/reviews_classified.csv', index=True)
     print('done')

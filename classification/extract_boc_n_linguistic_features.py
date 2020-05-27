@@ -28,7 +28,7 @@ class ReviewFeatureExtractor:
             file_full_path = dataset_path + "/" + file_path
             df = pd.read_csv(file_full_path)
             class_type = []
-            self.get_dataset(df=df, content_index=1)
+            self.get_dataset(df=df, content_index=1, is_eval=True)
 
         self.df_dataset.to_csv('../Review_Dataset/Gu_Dataset_features.csv', index=True)
 
@@ -79,7 +79,7 @@ class ReviewFeatureExtractor:
 
         return (new_sent.strip())
 
-    def get_dataset(self, df, content_index):
+    def get_dataset(self, df, content_index, is_eval=False):
 
         for index, row in df.iterrows():
             if isinstance(row[content_index], str):
@@ -135,7 +135,17 @@ class ReviewFeatureExtractor:
                 data_row = {'sentence': clean_sent, 'tagged_sent': sent_pos, 'pos': pos_tags_feature,
                             'char_grams': all_char_grams, 'root': sent_root,
                             'dep_tree': '-'.join(dep_tree_features), 'parse_tree': parse_tree_feature,
-                            'class': row[0] if content_index == 1 else None}
+                            'class': row[0] if content_index == 1 else None,
+                            'reviewId': row[1] if is_eval is False else None,
+                            'userName': row[2] if is_eval is False else None,
+                            'content': row[4] if is_eval is False else None,
+                            'score': row[5] if is_eval is False else None,
+                            'thumbsUpCount': row[6] if is_eval is False else None,
+                            'reviewCreatedVersion': row[7] if is_eval is False else None,
+                            'at': row[8] if is_eval is False else None,
+                            'replyContent': row[9] if is_eval is False else None,
+                            'repliedAt': row[10] if is_eval is False else None,
+                            }
 
                 self.df_dataset = self.df_dataset.append(data_row, ignore_index=True)
 
