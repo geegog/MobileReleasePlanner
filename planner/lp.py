@@ -10,10 +10,13 @@ class LP(base.MobileReleasePlanner):
     """Mobile Release Planning using Linear Programming."""
 
     def __init__(self, stakeholder_importance=None, release_relative_importance=None, release_duration=None,
-                 coupling=None, highest=True):
+                 coupling=None, highest=True, shuffle=True):
 
         """
-        Initialize a genetic algorithm.
+        Initialize a linear programming/greedy algorithm.
+
+        :type shuffle: bool
+        :param shuffle (bool): Shuffle features.
 
         :type stakeholder_importance:(int, int)
         :param stakeholder_importance (tuple): Stakeholders importance.
@@ -33,6 +36,7 @@ class LP(base.MobileReleasePlanner):
 
         self.delete_flag = False
         self.highest = highest
+        self.shuffle = shuffle
 
         super(LP, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
 
@@ -45,7 +49,8 @@ class LP(base.MobileReleasePlanner):
         """
 
         original_feature_set = copy.copy(array_was_feature)
-        random.shuffle(array_was_feature)
+        if self.shuffle:
+            random.shuffle(array_was_feature)
         for feature_array in array_was_feature:
             if feature_array is not None:
                 if self.highest:
@@ -116,7 +121,7 @@ class LP(base.MobileReleasePlanner):
 def main():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
-    lp = LP(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.3, 0.0, 0.7),
+    lp = LP(coupling=None, stakeholder_importance=(4, 6), release_relative_importance=(0.3, 0.0, 0.7),
             release_duration=14)
 
     features = lp.features()

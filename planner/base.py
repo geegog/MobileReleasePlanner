@@ -42,10 +42,12 @@ class MobileReleasePlanner(object):
         self.effort_release_3 = 0.0
         self.coupling = coupling
         self.release_duration = release_duration
-        self.inputs = pd.read_csv("../data/sample.csv", skiprows=1, nrows=15,
-                                  dtype={"Value value(1,i)": "Int64", "Value value(2,i)": "Int64"})
-        self.inputs.columns = ["Feature Key", "Feature f(i)", "Effort(days) t(i,2)", "Value v(1,i)",
-                               "Urgency u(1,i)", "Value v(2,i)", "Urgency u(2,i)"]
+        self.inputs = pd.read_csv("../data/features.csv", nrows=15,
+                                  dtype={"Stakeholder S (1), Value value(1,i)": "Int64",
+                                         "Stakeholder S (2), Value value(2,i)": "Int64"})
+        self.inputs.columns = ["Feature Key", "Feature f(i)", "Effort(days) t(i,2)", "Stakeholder S (1), Value v(1,i)",
+                               "Stakeholder S (1), Urgency u(1,i)", "Stakeholder S (2), Value v(2,i)",
+                               "Stakeholder S (2), Urgency u(2,i)"]
         features = self.inputs["Feature f(i)"].to_xarray().values
         self.keys = self.inputs["Feature Key"].to_xarray().values.tolist()
         self.effort = self.inputs["Effort(days) t(i,2)"].to_xarray().values.tolist()

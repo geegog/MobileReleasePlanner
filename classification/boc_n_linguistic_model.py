@@ -1,6 +1,7 @@
 import ast
 import csv
 import time
+from enum import Enum
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,12 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import train_test_split
+
+
+class Source(Enum):
+    JIRA = 'JIRA'
+    GITHUB = 'GITHUB'
+    PLAY_STORE = 'PLAY_STORE'
 
 
 class SentenceClassification:
@@ -111,9 +118,13 @@ class SentenceClassification:
         predictions = predictions.tolist()
 
         for index, row in reviews.iterrows():
+            review_class = predictions[index]
+            if review_class == 'N' or review_class == 'P' or review_class == 'B':
+                continue
+
             review_dict = {
                 'review-id': row['reviewId'],
-                'class': predictions[index],
+                'class': review_class,
                 'username': row['userName'],
                 'review_sent': row['content'],
                 'score': row['score'],
@@ -123,7 +134,8 @@ class SentenceClassification:
                 'reply_content': row['replyContent'],
                 'replied_at': row['repliedAt'],
                 'true_features': [],
-                'predicted_features': []
+                'predicted_features': [],
+                'source': Source.PLAY_STORE
             }
             classified_reviews[index] = review_dict
         return classified_reviews
@@ -131,7 +143,7 @@ class SentenceClassification:
 
 def evaluate():
     _start_time = time.time()
-    sentence_classifier = SentenceClassification()
+    sc = SentenceClassification()
     max_iteration = 10
 
     average_precision_eval, average_recall_eval, average_fscore_eval = ([] for i in range(3))
@@ -148,7 +160,7 @@ def evaluate():
             print('############Iteration # %d###############' % (i + 1))
 
             # obj.SplitDataintoTrainTest()
-            precision, recall, fscore = sentence_classifier.train_n_evaluate_on_test_data()
+            precision, recall, fscore = sc.train_n_evaluate_on_test_data()
 
             average_precision_eval.append(precision[0])
             average_recall_eval.append(recall[0])

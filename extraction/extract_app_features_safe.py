@@ -103,7 +103,7 @@ class SAFE:
                 lemma_app_words = [w.lemma_ for w in parse_feature]
                 contain_app_words = all(w in lemma_app_words for w in app_words)
 
-                if contain_pronoun != True and duplicate_words != True and contain_punct != True and contain_app_words != True and contain_special_character != True:
+                if contain_pronoun is not True and duplicate_words != True and contain_punct != True and contain_app_words != True and contain_special_character != True:
                     list_clean_feaures.append(feature_info)
 
             clean_features_list = list_clean_feaures.copy()

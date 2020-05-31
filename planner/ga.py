@@ -599,9 +599,9 @@ def exp2(coupling, cross_type, select_type):
 def main():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
-    exp1(coupling, "ordered", "tournament")
+    # exp1(None, "ordered", "tournament")
 
-    # exp2(coupling, "ordered", "fittest")
+    exp2(coupling, "ordered", "fittest")
     # exp2(coupling, "ordered", "proportionate")
     # exp2(coupling, "ordered", "tournament")
     #
