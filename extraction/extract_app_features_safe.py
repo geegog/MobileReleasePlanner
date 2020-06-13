@@ -56,7 +56,6 @@ class SAFE:
         for review_id in self.data.keys():
             review_sent_text = self.data[review_id]['review_sent']
 
-            sents_with_features = {}
             review_sent_wise_features = []
 
             text_processor = TextProcessing(self.appName, review_sent_text)

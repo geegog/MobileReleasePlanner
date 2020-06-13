@@ -126,7 +126,7 @@ class SentenceClassification:
                 'review-id': row['reviewId'],
                 'class': review_class,
                 'username': row['userName'],
-                'review_sent': row['content'],
+                'review_sent': row['sentence'],
                 'score': row['score'],
                 'thumbs_up_count': row['thumbsUpCount'],
                 'review_created_version': row['reviewCreatedVersion'],

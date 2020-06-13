@@ -17,7 +17,7 @@ class PlayStore:
 
 def main():
     ps = PlayStore()
-    result, continuation_token = ps.fetch_reviews("org.catrobat.paintroid", 500)
+    result, continuation_token = ps.fetch_reviews("org.catrobat.paintroid", 501)
 
     rows = []
     columns = ['reviewId', 'userName', 'userImage', 'content', 'score',
