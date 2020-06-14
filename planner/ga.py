@@ -572,7 +572,7 @@ def exp2(coupling, cross_type, select_type):
     for cr in cr_rate:
         for mr in mr_rate:
             ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-                    release_duration=14, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
+                    release_duration=21, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
                     mutation_rate=mr)
             ga.solve()
 
@@ -597,7 +597,8 @@ def exp2(coupling, cross_type, select_type):
 
 
 def main():
-    coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
+    # coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
+    coupling = {}
 
     # exp1(None, "ordered", "tournament")
 
