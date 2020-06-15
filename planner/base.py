@@ -42,7 +42,7 @@ class MobileReleasePlanner(object):
         self.effort_release_3 = 0.0
         self.coupling = coupling
         self.release_duration = release_duration
-        self.inputs = pd.read_csv("../data/features.csv", nrows=15,
+        self.inputs = pd.read_csv("../data/features.csv",
                                   dtype={"Stakeholder S (1), Value value(1,i)": "Int64",
                                          "Stakeholder S (2), Value value(2,i)": "Int64"})
         self.inputs.columns = ["Feature Key", "Feature f(i)", "Effort(days) t(i,2)", "Stakeholder S (1), Value v(1,i)",
@@ -251,7 +251,7 @@ class MobileReleasePlanner(object):
         release_2_object_score = self.results[2]
         release_3_object_score = self.results[3]
 
-        for i in range(0, 15):
+        for i in range(0, len(self.keys)):
             rows.append([release_1_object_score[i], release_2_object_score[i], release_3_object_score[i]])
         return rows
 
