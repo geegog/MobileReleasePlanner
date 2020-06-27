@@ -45,12 +45,13 @@ class MobileReleasePlanner(object):
         self.inputs = pd.read_csv("../data/features.csv",
                                   dtype={"Stakeholder S (1), Value value(1,i)": "Int64",
                                          "Stakeholder S (2), Value value(2,i)": "Int64"})
-        self.inputs.columns = ["Feature Key", "Feature f(i)", "Effort(days) t(i,2)", "Stakeholder S (1), Value v(1,i)",
+        self.inputs.columns = ["Feature Key", "Feature f(i)", "Effort(Story Points) t(i,2)",
+                               "Stakeholder S (1), Value v(1,i)",
                                "Stakeholder S (1), Urgency u(1,i)", "Stakeholder S (2), Value v(2,i)",
                                "Stakeholder S (2), Urgency u(2,i)"]
         features = self.inputs["Feature f(i)"].to_xarray().values
         self.keys = self.inputs["Feature Key"].to_xarray().values.tolist()
-        self.effort = self.inputs["Effort(days) t(i,2)"].to_xarray().values.tolist()
+        self.effort = self.inputs["Effort(Story Points) t(i,2)"].to_xarray().values.tolist()
         self.results = []
         self.mobile_release_plan = []
         self.results.append(features.tolist())

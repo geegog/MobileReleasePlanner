@@ -142,7 +142,8 @@ class GA(base.MobileReleasePlanner):
         fx = copy.copy(self.features)
         lp = LP(stakeholder_importance=self.stakeholder_importance,
                 release_relative_importance=self.release_relative_importance,
-                release_duration=self.release_duration, coupling=self.coupling, highest=False)
+                release_duration=self.release_duration, coupling=self.coupling,
+                highest=False, is_sorted=False)
         lp.assignment_function(fx)
 
         sorted_plan = sorted(lp.mobile_release_plan, key=lambda f: f[0])
@@ -487,7 +488,8 @@ class GA(base.MobileReleasePlanner):
 
 
 def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
-              select_type, cross_type, cr_rate, mr_rate, cycles=None, processing_time=None, fitness=None, scatter=False):
+              select_type, cross_type, cr_rate, mr_rate, cycles=None, processing_time=None, fitness=None,
+              scatter=False):
     """
     Plots a graph
 
@@ -545,34 +547,48 @@ def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
 
 
 def exp1(coupling, cross_type, select_type):
-    generations = [i for i in range(10, 110, 5)]
+    cr_rate = np.linspace(0.1, 1, 10)
+    mr_rate = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+    generations = [i for i in range(2, 1001, 1)]
     fitness_scores_generation = []
 
-    for size in generations:
-        ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-                release_duration=14, cross_type=cross_type, select_type=select_type, population_size=size,
-                mutation_rate=0.05, crossover_rate=0.9)
-        result = ga.solve()
-        fitness_scores_generation.append(result[1])
-        # print(ga.mobile_release_plan)
-        # print(ga.objective_function(ga.mobile_release_plan))
-        # print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
+    for cr in cr_rate:
+        for mr in mr_rate:
+            for size in generations:
+                scores = 0
+                count = 0
+                scores_runs = []
+                for i in range(0, 5):
+                    ga = GA(coupling=coupling, stakeholder_importance=(6, 4),
+                            release_relative_importance=(0.8, 0.1, 0.1),
+                            release_duration=43, cross_type=cross_type, select_type=select_type, population_size=size,
+                            mutation_rate=mr, crossover_rate=cr)
+                    result = ga.solve()
+                    scores_runs.append(result[1])
+                    scores += result[1]
+                    count += 1
+                fitness_scores_generation.append(
+                    [scores / count, size, scores_runs, count, mr, cr, select_type, cross_type])
+                # print(ga.mobile_release_plan)
+                # print(ga.objective_function(ga.mobile_release_plan))
+                # print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
-    plot_data(generations, fitness_scores_generation, "Generations", "Fitness Scores",
-              "Fitness Function", cross_type=cross_type, select_type=select_type,
-              mr_rate=0.05, cr_rate=0.9)
+    df2 = pd.DataFrame(np.array(fitness_scores_generation),
+                       columns=['average fitness', 'population size', 'fitness per run',
+                                'number of runs', 'mr', 'cr', 'selection', 'crossover type'])
+
+    df2.to_csv('ga-results/selection-' + select_type + '-crossover-' + cross_type + '.csv')
 
 
 def exp2(coupling, cross_type, select_type):
-
     cr_rate = np.linspace(0.1, 1, 10)
     mr_rate = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
     results = []
 
     for cr in cr_rate:
         for mr in mr_rate:
-            ga = GA(coupling=coupling, stakeholder_importance=(4, 6), release_relative_importance=(0.4, 0.3, 0.3),
-                    release_duration=21, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
+            ga = GA(coupling=coupling, stakeholder_importance=(6, 4), release_relative_importance=(0.8, 0.1, 0.1),
+                    release_duration=43, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
                     mutation_rate=mr)
             ga.solve()
 
@@ -587,7 +603,7 @@ def exp2(coupling, cross_type, select_type):
                 tallies = [tally for _, _, tally in ga.scored]
                 scores = [score for _, score, _ in ga.scored]
 
-                plot_data(sorted(tallies), sorted(scores), "Shared Score", "Fitness Scores",
+                plot_data(sorted(tallies), sorted(scores), "Tally", "Fitness Scores",
                           "Fitness Function", cross_type=cross_type, select_type=select_type,
                           fitness=ga.objective_function(ga.mobile_release_plan), mr_rate=mr, cr_rate=cr,
                           cycles=ga.cycles, processing_time=ga.end - ga.start)
@@ -600,19 +616,17 @@ def main():
     # coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
     coupling = {}
 
-    # exp1(None, "ordered", "tournament")
-
-    exp2(coupling, "ordered", "fittest")
-    # exp2(coupling, "ordered", "proportionate")
-    # exp2(coupling, "ordered", "tournament")
+    # exp1(coupling, "ordered", "fittest")
+    # exp1(coupling, "ordered", "proportionate")
+    # exp1(coupling, "ordered", "tournament")
     #
-    # exp2(coupling, "partially_matched", "fittest")
-    # exp2(coupling, "partially_matched", "proportionate")
-    # exp2(coupling, "partially_matched", "tournament")
+    # exp1(coupling, "partially_matched", "fittest")
+    # exp1(coupling, "partially_matched", "proportionate")
+    # exp1(coupling, "partially_matched", "tournament")
     #
-    # exp2(coupling, "edge_recombination", "fittest")
-    # exp2(coupling, "edge_recombination", "proportionate")
-    # exp2(coupling, "edge_recombination", "tournament")
+    # exp1(coupling, "edge_recombination", "fittest")
+    # exp1(coupling, "edge_recombination", "proportionate")
+    # exp1(coupling, "edge_recombination", "tournament")
 
 
 if __name__ == "__main__":

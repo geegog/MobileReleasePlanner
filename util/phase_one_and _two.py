@@ -1,19 +1,22 @@
-import gensim
-import nltk
+import datetime
 import logging
 import math
+import uuid
+
+import gensim
+import nltk
+import numpy as np
+import pandas as pd
+from sentence_transformers import SentenceTransformer
 
 from classification.boc_n_linguistic_model import SentenceClassification
 from extraction.extract_app_features_safe import SAFE, ExtractionMode, nlp
-from sentence_transformers import SentenceTransformer
 from similarity.setup import cos_sim
-import pandas as pd
-import numpy as np
 
 logging.basicConfig(level=logging.INFO)
 nltk.download('wordnet')
 
-THRESHOLD = 0.710855
+THRESHOLD = 0.71
 model = SentenceTransformer('bert-large-nli-stsb-mean-tokens')
 
 
@@ -21,14 +24,46 @@ def get_value(score):
     return score
 
 
-def get_priority(thumbs_up_count):
-    if thumbs_up_count > 30:
+# Split the number into N parts such that difference between
+# the smallest and the largest part is minimum
+def split(x, n):
+    # If we cannot split the
+    # number into exactly 'N' parts
+    s = []
+    if x < n:
+        return -1
+
+    # If x % n == 0 then the minimum
+    # difference is 0 and all
+    # numbers are x / n
+    elif x % n == 0:
+        for i in range(n):
+            s.append(x // n)
+    else:
+        # upto n-(x % n) the values
+        # will be x / n
+        # after that the values
+        # will be x / n + 1
+        zp = n - (x % n)
+        pp = x // n
+        for i in range(n):
+            if i >= zp:
+                s.append(pp + 1)
+            else:
+                s.append(pp)
+    return s
+
+
+def get_priority(thumbs_up_count, parts):
+    if parts == -1:
+        return 1
+    elif thumbs_up_count > parts[0] + parts[1] + parts[2] + parts[3]:
         return 5
-    elif thumbs_up_count > 20:
+    elif thumbs_up_count > parts[0] + parts[1] + parts[2]:
         return 4
-    elif thumbs_up_count > 15:
+    elif thumbs_up_count > parts[0] + parts[1]:
         return 3
-    elif thumbs_up_count > 5:
+    elif thumbs_up_count > parts[0]:
         return 2
     else:
         return 1
@@ -45,8 +80,12 @@ def preprocess(text):
 def issue_tracker_features():
     df_dataset = pd.read_csv('../data/jira.catrob.at-PAINTROID-issues.csv')
     rows = []
+    new_start_date = datetime.datetime.fromisoformat('2019-07-24 00:00:00.000')
+    old_start_date = datetime.datetime.fromisoformat('2019-01-01 00:00:00.000')
+    old_end_date = datetime.datetime.fromisoformat('2019-07-24 00:00:00.000')
     for index, data in df_dataset.iterrows():
-        if data[68] == 'new' and data[43] == 'Story':
+        date_time_obj = datetime.datetime.strptime(data[9], '%Y-%m-%dT%H:%M:%S.%f%z').replace(tzinfo=None)
+        if data[68] == 'new' and (data[43] == 'Story' or data[43] == 'Bug') and date_time_obj >= new_start_date:
             # ['Feature Key',
             #     'Feature f(i)',
             #     'Effort(days) t(i,2)',
@@ -54,7 +93,7 @@ def issue_tracker_features():
             #     'Stakeholder S (1), Urgency u(1,i)',
             #     'Stakeholder S (2), Value v(2,i)',
             #     'Stakeholder S (2), Urgency u(2,i)']
-            feature = [data[149], preprocess(data[30]), int(data[28]), 0, '(0, 0, 0)', 0, '(0, 0, 0)']
+            feature = [data[149], preprocess(data[30]), int(5 if math.isnan(data[28]) else data[28]), 0, '(0, 0, 0)', 0, '(0, 0, 0)']
             rows.append(feature)
     return rows
 
@@ -141,17 +180,21 @@ def get_features_from_app_reviews_and_issue_tracker():
 
     extraction_mode = ExtractionMode.USER_REVIEWS
 
-    obj_safe = SAFE('PAINTROID', cr, extraction_mode, nlp)
+    obj_safe = SAFE('PAINTROID', cr[0], extraction_mode, nlp)
     true_features_dict, extracted_features = obj_safe.get_reviews_with_extracted_features()
     dict_true_features = obj_safe.clean_features(true_features_dict)
 
-    columns = ["Feature Key", "Feature f(i)", "Effort(days) t(i,2)", "Stakeholder S (1), Value v(1,i)",
+    columns = ["Feature Key", "Feature f(i)", "Effort(Story Points) t(i,2)", "Stakeholder S (1), Value v(1,i)",
                "Stakeholder S (1), Urgency u(1,i)", "Stakeholder S (2), Value v(2,i)",
                "Stakeholder S (2), Urgency u(2,i)"]
     rows_jira = []
     rows_app_store = []
+    key_link = []
     for f_row in issue_tracker_features():
         rows_jira.append(f_row)
+
+    max_thumbs_ups = int(max(item[1]['thumbs_up_count'] for item in dict_true_features.items()))
+    parts = split(max_thumbs_ups, 5)
 
     for dict in dict_true_features.items():
         if len(dict[1]['predicted_features']) != 0:
@@ -160,7 +203,7 @@ def get_features_from_app_reviews_and_issue_tracker():
                 existing_f = [(idx, feature) for idx, feature in enumerate(rows_app_store) if
                               (feature[1] == pf)]
                 value = get_value(int(dict[1]['score']))
-                priority = get_priority(int(dict[1]['thumbs_up_count']))
+                priority = get_priority(int(dict[1]['thumbs_up_count']), parts)
                 if len(existing_f) == 1:
                     avg_s_1_v = math.ceil((existing_f[0][1][3] + value) / 2)
                     vector_tuple = get_priority_tuple(existing_f[0][1][4])
@@ -175,8 +218,11 @@ def get_features_from_app_reviews_and_issue_tracker():
                 #     'Stakeholder S (1), Urgency u(1,i)',
                 #     'Stakeholder S (2), Value v(2,i)',
                 #     'Stakeholder S (2), Urgency u(2,i)']
+                key = str(dict[0]) + '-' + str(i) + '-' + dict[1]['review-id']
+                key_ran = 'R-' + uuid.uuid4().hex[:6].upper()
+                key_link.append([key, key_ran])
                 feature = [
-                    str(dict[0]) + '-' + str(i) + '-' + dict[1]['review-id'],
+                    key_ran,
                     pf,
                     5,
                     value,
@@ -190,8 +236,11 @@ def get_features_from_app_reviews_and_issue_tracker():
 
     df = pd.DataFrame(np.array(result),
                       columns=columns)
+    df2 = pd.DataFrame(np.array(key_link),
+                       columns=['key', 'random key'])
 
     df.to_csv('../data/features.csv', index=False)
+    df2.to_csv('../data/key_link.csv', index=False)
     print('here')
 
 

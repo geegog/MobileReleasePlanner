@@ -5,6 +5,7 @@ import nltk
 import pandas as pd
 import requests
 import spacy
+import datetime
 from nltk.tree import Tree
 
 nltk.download('punkt')
@@ -81,8 +82,12 @@ class ReviewFeatureExtractor:
 
     def get_dataset(self, df, content_index, is_eval=False):
 
+        new_start_date = datetime.datetime.strptime('2019-07-24 00:00:00', '%Y-%m-%d %H:%M:%S')
+        old_start_date = datetime.datetime.strptime('2019-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+        old_end_date = datetime.datetime.strptime('2019-07-24 00:00:00', '%Y-%m-%d %H:%M:%S')
         for index, row in df.iterrows():
-            if isinstance(row[content_index], str):
+            date_time_obj = datetime.datetime.strptime(row[8], '%Y-%m-%d %H:%M:%S')
+            if isinstance(row[content_index], str) and date_time_obj >= new_start_date:
                 text = row[content_index]
                 if is_eval:
                     self.process_dataset(content_index, text, row, is_eval)

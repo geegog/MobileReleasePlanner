@@ -10,13 +10,16 @@ class LP(base.MobileReleasePlanner):
     """Mobile Release Planning using Linear Programming."""
 
     def __init__(self, stakeholder_importance=None, release_relative_importance=None, release_duration=None,
-                 coupling=None, highest=True, shuffle=True):
+                 coupling=None, highest=True, is_sorted=True):
 
         """
         Initialize a linear programming/greedy algorithm.
 
         :type shuffle: bool
         :param shuffle (bool): Shuffle features.
+
+        :type is_sorted: bool
+        :param is_sorted (bool): Sort features in descending order based on WAS of 1st release.
 
         :type stakeholder_importance:(int, int)
         :param stakeholder_importance (tuple): Stakeholders importance.
@@ -36,7 +39,7 @@ class LP(base.MobileReleasePlanner):
 
         self.delete_flag = False
         self.highest = highest
-        self.shuffle = shuffle
+        self.is_sorted = is_sorted
 
         super(LP, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
 
@@ -48,8 +51,10 @@ class LP(base.MobileReleasePlanner):
         :param array_was_feature: Release and WAS for a feature
         """
 
-        original_feature_set = copy.copy(array_was_feature)
-        if self.shuffle:
+        # original_feature_set = copy.copy(array_was_feature)
+        if self.is_sorted:
+            array_was_feature = sorted(array_was_feature, key=lambda f: f[0][1], reverse=True)
+        else:
             random.shuffle(array_was_feature)
         for feature_array in array_was_feature:
             if feature_array is not None:
@@ -121,20 +126,51 @@ class LP(base.MobileReleasePlanner):
 def main():
     coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
-    lp = LP(coupling=None, stakeholder_importance=(4, 6), release_relative_importance=(0.3, 0.0, 0.7),
-            release_duration=14)
+    d = 43
+    si = [(4, 6), (6, 4)]
+    rrp = [(0.3, 0.3, 0.3), (0.8, 0.1, 0.1), (0.1, 0.8, 0.1), (0.1, 0.1, 0.8)]
+    heading = ['Release', 'WAS', 'Key', 'Feature', 'Effort (Story Point)']
 
-    features = lp.features()
+    for i in si:
+        for ri in rrp:
 
-    # data = np.array(features)
-    # result = pd.DataFrame(data=data)
-    # print(result)
+            lp = LP(coupling=None, stakeholder_importance=i, release_relative_importance=ri,
+                    release_duration=d, is_sorted=False)
 
-    lp.assignment_function(features)
+            features = lp.features()
 
-    print(lp.mobile_release_plan)
-    print(lp.objective_function(lp.mobile_release_plan, exclude_postponed=True))
-    print(lp.effort_release_1, lp.effort_release_2, lp.effort_release_3)
+            # data = np.array(features)
+            # result = pd.DataFrame(data=data)
+            # print(result)
+
+            lp.assignment_function(features)
+
+            mrp = lp.mobile_release_plan
+
+            rows = []
+
+            for r in mrp:
+                rows.append([r[0], r[1], r[2], r[3], r[4]])
+            obj_score = lp.objective_function(lp.mobile_release_plan)
+
+            print('Effort R1: ' + str(lp.effort_release_1),
+                  'Effort R2: ' + str(lp.effort_release_2),
+                  'Effort R3: ' + str(lp.effort_release_3),
+                  'D: ' + str(d) + ' S: ' + ''.join(
+                      str(i)) + ' RRI: ' + ''.join(str(ri)),
+                  'Objective Function: ' + str(obj_score))
+
+            rows.append(['', 'Effort R1: ' + str(lp.effort_release_1),
+                         'Effort R2: ' + str(lp.effort_release_2),
+                         'Effort R3: ' + str(lp.effort_release_3),
+                         'F(x): ' + str(obj_score)])
+            rows.append(['', '', 'D: ' + str(d), 'S: ' + ''.join(
+                str(i)), 'RRI: ' + ''.join(str(ri))])
+            df2 = pd.DataFrame(np.array(rows),
+                               columns=heading)
+
+            df2.to_csv('lp-test-results/' + 'duration-' + str(d) + '-stakeholder_importance-' + ''.join(
+                str(i)) + '-release_relative_importance-' + ''.join(str(ri)) + '.csv')
 
 
 if __name__ == "__main__":

@@ -117,11 +117,27 @@ class SentenceClassification:
 
         predictions = predictions.tolist()
 
+        b = 0
+        p = 0
+        n = 0
+        r = 0
+        e = 0
+
         for index, row in reviews.iterrows():
             review_class = predictions[index]
-            if review_class == 'N' or review_class == 'P' or review_class == 'B':
+            if review_class == 'P':
+                p += 1
                 continue
-
+            if review_class == 'N':
+                n += 1
+                continue
+            if review_class == 'B':
+                b += 1
+                continue
+            if review_class == 'E':
+                e += 1
+            if review_class == 'R':
+                r += 1
             review_dict = {
                 'review-id': row['reviewId'],
                 'class': review_class,
@@ -138,7 +154,7 @@ class SentenceClassification:
                 'source': Source.PLAY_STORE
             }
             classified_reviews[index] = review_dict
-        return classified_reviews
+        return classified_reviews, (e, r, p, n, b)
 
 
 def evaluate():
@@ -220,6 +236,11 @@ if __name__ == '__main__':
     sentence_classifier = SentenceClassification()
     cr = sentence_classifier.classify_reviews()
 
-    end_time = time.time()
+    df2 = pd.DataFrame(np.array([[cr[1][0], cr[1][1], cr[1][2], cr[1][3], cr[1][4]]]),
+                       columns=['E', 'R', 'P', 'N', 'B'])
+
+    df2.to_csv('classes.csv')
+
+    end_time = time.time() - start_time
 
     print('done')
