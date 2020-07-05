@@ -126,7 +126,7 @@ class MobileReleasePlanner(object):
         return was
 
     @staticmethod
-    def objective_function(was, exclude_postponed=False):
+    def objective_function(was, exclude_postponed=True):
         """
         An additive function exists in which the total objective function value is determined
         as the sum of the weighted average satisfaction WAS(i, k) of stakeholder priorities for

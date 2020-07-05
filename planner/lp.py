@@ -124,9 +124,9 @@ class LP(base.MobileReleasePlanner):
 
 
 def main():
-    coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
+    # coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
-    d = 43
+    d = 27
     si = [(4, 6), (6, 4)]
     rrp = [(0.3, 0.3, 0.3), (0.8, 0.1, 0.1), (0.1, 0.8, 0.1), (0.1, 0.1, 0.8)]
     heading = ['Release', 'WAS', 'Key', 'Feature', 'Effort (Story Point)']

@@ -85,7 +85,7 @@ def issue_tracker_features():
     old_end_date = datetime.datetime.fromisoformat('2019-07-24 00:00:00.000')
     for index, data in df_dataset.iterrows():
         date_time_obj = datetime.datetime.strptime(data[9], '%Y-%m-%dT%H:%M:%S.%f%z').replace(tzinfo=None)
-        if data[68] == 'new' and (data[43] == 'Story' or data[43] == 'Bug') and date_time_obj >= new_start_date:
+        if data[68] == 'new' and data[43] == 'Story' and date_time_obj >= new_start_date:
             # ['Feature Key',
             #     'Feature f(i)',
             #     'Effort(days) t(i,2)',

@@ -1,12 +1,17 @@
+from textwrap import wrap
+
 import pandas as pd
 import numpy as np
 import logging
+import matplotlib.pyplot as plt
 
 from sentence_transformers import SentenceTransformer
 from similarity.setup import cos_sim, get_jaccard_sim
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 logging.basicConfig(level=logging.INFO)
+
+plt.style.use('seaborn-whitegrid')
 
 model_names = ['bert-base-nli-mean-tokens', 'bert-large-nli-mean-tokens',
                'bert-base-nli-stsb-mean-tokens', 'bert-large-nli-stsb-mean-tokens', 'jaccard']
@@ -76,6 +81,54 @@ def exp(threshold, model_name, model):
     return accuracy, precision, recall, f1score
 
 
+def plot(precision, f1score, recall, model):
+    df = pd.DataFrame({'x': thresholds, 'y1': precision, 'y2': f1score, 'y3': recall})
+
+    plt.title("\n".join(wrap("Threshold Plot for " + model, 60)))
+    plt.xlabel('Threshold')
+    plt.ylabel('Score')
+
+    plt.plot('x', 'y1', data=df, color='blue', linewidth=2, label="Precision")
+    plt.plot('x', 'y2', data=df, color='brown', linewidth=2, label="F1 Score")
+    plt.plot('x', 'y3', data=df, color='black', linewidth=2, label="Recall")
+    plt.legend(prop={'size': 10})
+    plt.savefig('results/' + model + '.png')
+    plt.show()
+
+
+def get_plots_for_models():
+    columns = ["Threshold", "Threshold", "Accuracy", "Precision", "Recall", "f1 Score"]
+    scores_model_bert_basenli_mean_tokens = pd.read_csv("results/scores-model-bert-base-nli-mean-tokens.csv")
+    scores_model_bert_base_nli_stsb_mean_tokens = pd.read_csv("results/scores-model-bert-base-nli-stsb-mean-tokens.csv")
+    scores_model_bert_large_nli_mean_tokens = pd.read_csv("results/scores-model-bert-large-nli-mean-tokens.csv")
+    scores_model_bert_large_nli_stsb_meantokens = pd.read_csv("results/scores-model-bert-large-nli-stsb-mean-tokens.csv")
+    scores_model_jaccard = pd.read_csv("results/scores-model-jaccard.csv")
+
+    scores_model_bert_basenli_mean_tokens.columns = columns
+    scores_model_bert_base_nli_stsb_mean_tokens.columns = columns
+    scores_model_bert_large_nli_mean_tokens.columns = columns
+    scores_model_bert_large_nli_stsb_meantokens.columns = columns
+    scores_model_jaccard.columns = columns
+
+    loop_data('bert_basenli_mean_tokens', scores_model_bert_basenli_mean_tokens)
+    loop_data('bert_base_nli_stsb_mean_tokens', scores_model_bert_base_nli_stsb_mean_tokens)
+    loop_data('bert_large_nli_mean_tokens', scores_model_bert_large_nli_mean_tokens)
+    loop_data('bert_large_nli_stsb_mean_tokens', scores_model_bert_large_nli_stsb_meantokens)
+    loop_data('jaccard', scores_model_jaccard)
+
+
+def loop_data(model, data):
+    precision = []
+    f1score = []
+    recall = []
+    for i, r in data.iterrows():
+        precision.append(r['Precision'])
+        f1score.append(r['f1 Score'])
+        recall.append(r['Recall'])
+
+    plot(precision, f1score, recall, model)
+
+
 def run():
 
     for n in model_names:
@@ -92,7 +145,8 @@ def run():
         df2.to_csv('results/scores-model-' + n + '.csv')
 
 
-run()
+# run()
+get_plots_for_models()
 
 
 

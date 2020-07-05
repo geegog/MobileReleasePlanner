@@ -1,14 +1,21 @@
 import math
 import random
 import time
+from textwrap import wrap
 
 import pandas as pd
 import numpy as np
 import copy
-import matplotlib.pyplot as plt
 
 from planner import base, crossover
 from planner.lp import LP
+
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+plt.style.use('seaborn-whitegrid')
 
 
 class GA(base.MobileReleasePlanner):
@@ -16,12 +23,18 @@ class GA(base.MobileReleasePlanner):
 
     def __init__(self, stakeholder_importance, release_relative_importance, release_duration, coupling=None,
                  crossover_rate=0.1, mutation_rate=0.05, max_cycles=600, cross_type='ordered',
-                 select_type='fittest', population_size=50):
+                 select_type='fittest', population_size=50, auto_termination=False, population_percentage=0.3):
         """
         Initialize a genetic algorithm.
 
         :type stakeholder_importance:(int, int)
         :param stakeholder_importance (tuple): Stakeholders importance.
+
+        :type population_percentage: float
+        :param population_percentage : When to terminate algorithm if all scores from this percentage is similar.
+
+        :type auto_termination: bool
+        :param auto_termination : Turn on auto termination function.
 
         :type release_relative_importance: (float, float, float)
         :param release_relative_importance: Release relative importance.
@@ -72,6 +85,9 @@ class GA(base.MobileReleasePlanner):
         self.start = None
         self.end = None
         self.max_cycles = max_cycles
+        self.best_per_iteration = []
+        self.auto_termination = auto_termination
+        self.population_percentage = population_percentage
 
         super(GA, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
         self.features = self.features()
@@ -120,7 +136,7 @@ class GA(base.MobileReleasePlanner):
         for tupl in ranked:
             if tupl[1] > 0:
                 tally = tally + tupl[1] / shares
-            # chromosome, score, share range
+            # chromosome, score, weighted fitness
             self.scored.append((tupl[0], tupl[1], tally))
 
     def new_population(self):
@@ -421,6 +437,7 @@ class GA(base.MobileReleasePlanner):
             if self.is_valid(offspring_from_mr):
                 terminator = False
 
+        self.best_per_iteration.append([self.cycles, self.scored[0][1]])
         return offspring_from_mr
 
     def cull(self):
@@ -442,9 +459,13 @@ class GA(base.MobileReleasePlanner):
 
         :return: True or False
         """
-        if len(self.scored) >= 50:
-            number_of_optimal_solutions_to_observer = int(math.ceil(0.3 * len(self.scored)))
-            if self.scored[0][1] == self.scored[number_of_optimal_solutions_to_observer][1] or self.cycles > 4000:
+        if self.auto_termination is True and len(self.scored) >= 50:
+            number_of_optimal_solutions_to_observe = int(math.ceil(self.population_percentage * len(self.scored)))
+            observed_sample_scores = []
+            for i, s in enumerate(self.scored):
+                if number_of_optimal_solutions_to_observe:
+                    observed_sample_scores.append(s[1])
+            if len(set(observed_sample_scores)) == 1 or self.cycles > self.max_cycles:
                 return True
             else:
                 return False
@@ -474,13 +495,13 @@ class GA(base.MobileReleasePlanner):
         terminate_flag = False
         try:
             while not terminate_flag:
-                self.cycles += 1
                 offspring = self.ga_operation()
                 score = self.evaluate(offspring)
-                if not self.exist(offspring):
-                    self.seed.append(offspring)
-                    self.cull()
+                # if not self.exist(offspring):
+                self.seed.append(offspring)
+                self.cull()
                 terminate_flag = self.check_termination()
+                self.cycles += 1
         except KeyboardInterrupt:
             pass
         self.end = time.time()
@@ -488,7 +509,7 @@ class GA(base.MobileReleasePlanner):
 
 
 def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
-              select_type, cross_type, cr_rate, mr_rate, cycles=None, processing_time=None, fitness=None,
+              select_type, cross_type, cr, mr, cycles=None, processing_time=None, fitness=None,
               scatter=False):
     """
     Plots a graph
@@ -499,10 +520,10 @@ def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
     :type cycles: int
     :param fitness: Score
     :type fitness: float
-    :param mr_rate: Mutation rate
-    :type mr_rate: float
-    :param cr_rate: Crossover rate
-    :type cr_rate: float
+    :param mr: Mutation rate
+    :type mr: float
+    :param cr: Crossover rate
+    :type cr: float
     :param cross_type: Crossover strategy
     :type cross_type: str
     :param select_type: Selection strategy
@@ -520,113 +541,148 @@ def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
     :param title: Graph title
     :type title: str
     """
-    plt.style.use('seaborn-whitegrid')
+
+    if cycles is not None:
+        cycles = 'Cycles: ' + str(cycles) + ' '
+    else:
+        cycles = ''
+    if processing_time is not None:
+        processing_time = 'Time: ' + str(round(processing_time)) + 's '
+    else:
+        processing_time = ''
+    if fitness is not None:
+        fitness = 'Fitness: ' + str(fitness) + ' '
+    else:
+        fitness = ''
 
     if scatter:
         plt.scatter(x_axis_data, y_axis_data, marker="1")
     else:
-        plt.plot(x_axis_data, y_axis_data)
+        plt.plot(x_axis_data, y_axis_data,
+                 label=cycles + processing_time + fitness)
 
     plt.xlabel(x_axis_name)
     plt.ylabel(y_axis_name)
 
-    plt.title(title)
+    plt.title("\n".join(wrap(title + " (Selection: " + str(select_type) + ", Crossover: " + str(cross_type)
+                             + ", mr: " + str(mr) + ", cr: " + str(cr) + ")", 60)))
 
-    plt.figtext(.8, .60, "mr rate: " + str(mr_rate), color="red")
-    plt.figtext(.8, .57, "cr rate: " + str(cr_rate), color="red")
-    plt.figtext(.8, .54, "se: " + str(select_type), color="red")
-    plt.figtext(.8, .51, "cr: " + str(cross_type), color="red")
-    if cycles is not None:
-        plt.figtext(.8, .48, "cycles: " + str(cycles), color="red")
-    if processing_time is not None:
-        plt.figtext(.8, .45, "t: " + str(processing_time), color="red")
-    if fitness is not None:
-        plt.figtext(.8, .42, "fitness: " + str(fitness), color="red")
+    plt.legend(prop={'size': 10})
 
+    plt.savefig('exp1/selection-' + str(select_type) + '-crossover-' + str(cross_type)
+                + '-cr-' + str(cr) + '-mr-' + str(mr) + '.png')
     plt.show()
+    plt.close()
 
 
-def exp1(coupling, cross_type, select_type):
-    cr_rate = np.linspace(0.1, 1, 10)
-    mr_rate = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-    generations = [i for i in range(2, 1001, 1)]
+cr_rate = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+mr_rate = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+
+
+def exp3(coupling, cross_type, select_type):
+    generations = [i for i in range(30, 110, 10)]
     fitness_scores_generation = []
 
-    for cr in cr_rate:
-        for mr in mr_rate:
-            for size in generations:
-                scores = 0
-                count = 0
-                scores_runs = []
-                for i in range(0, 5):
-                    ga = GA(coupling=coupling, stakeholder_importance=(6, 4),
-                            release_relative_importance=(0.8, 0.1, 0.1),
-                            release_duration=43, cross_type=cross_type, select_type=select_type, population_size=size,
-                            mutation_rate=mr, crossover_rate=cr)
-                    result = ga.solve()
-                    scores_runs.append(result[1])
-                    scores += result[1]
-                    count += 1
-                fitness_scores_generation.append(
-                    [scores / count, size, scores_runs, count, mr, cr, select_type, cross_type])
-                # print(ga.mobile_release_plan)
-                # print(ga.objective_function(ga.mobile_release_plan))
-                # print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
+    cr = 0.1
+    mr = 0.05
 
-    df2 = pd.DataFrame(np.array(fitness_scores_generation),
-                       columns=['average fitness', 'population size', 'fitness per run',
-                                'number of runs', 'mr', 'cr', 'selection', 'crossover type'])
+    for size in generations:
+        ga = GA(coupling=coupling, stakeholder_importance=(6, 4),
+                release_relative_importance=(0.8, 0.1, 0.1),
+                release_duration=27, cross_type=cross_type, select_type=select_type, population_size=size,
+                mutation_rate=mr, crossover_rate=cr, auto_termination=True)
+        result = ga.solve()
+        fitness_scores_generation.append(result[1])
 
-    df2.to_csv('ga-results/selection-' + select_type + '-crossover-' + cross_type + '.csv')
+    plot_data(generations, fitness_scores_generation, "Population Size", "Best Fitness Score",
+              "Algorithm Efficiency with Population Size", cross_type=cross_type, select_type=select_type,
+              mr=mr, cr=cr, fitness=max(fitness_scores_generation))
 
 
 def exp2(coupling, cross_type, select_type):
-    cr_rate = np.linspace(0.1, 1, 10)
-    mr_rate = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+    max_cycles = 1000
+    iterations = [i for i in range(0, max_cycles)]
+    runs = 10
+
+    for cr in cr_rate:
+        avg_scores = []
+        for mr in mr_rate:
+            scores_bucket = [[] for _ in range(max_cycles)]
+            for r in range(0, runs):
+                ga = GA(coupling=coupling, stakeholder_importance=(6, 4), release_relative_importance=(0.8, 0.1, 0.1),
+                        release_duration=27, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
+                        mutation_rate=mr, max_cycles=max_cycles - 1)
+                ga.solve()
+
+                for i, best in ga.best_per_iteration:
+                    scores_bucket[i].append(best)
+            avg_scores.append([sum(bucket) / runs for bucket in scores_bucket])
+
+        df = pd.DataFrame({'x': iterations, 'y1': avg_scores[0], 'y2': avg_scores[1],
+                           'y3': avg_scores[2], 'y4': avg_scores[3],
+                           'y5': avg_scores[4], 'y6': avg_scores[5]})
+
+        plt.title("\n".join(wrap("Fitness Function (Selection: " + str(select_type) + ", Crossover: " + str(cross_type)
+                                 + ", cr: " + str(cr) + ")", 60)))
+        plt.xlabel('Iteration')
+        plt.ylabel('Average Fitness Score From 10 Runs')
+
+        plt.plot('x', 'y1', data=df, color='blue', linewidth=3, label="0.05")
+        plt.plot('x', 'y2', data=df, color='brown', linewidth=2.8, label="0.1", linestyle='dashed')
+        plt.plot('x', 'y3', data=df, color='olive', linewidth=2.6, label="0.15")
+        plt.plot('x', 'y4', data=df, color='red', linewidth=2.4, label="0.2", linestyle='dashed')
+        plt.plot('x', 'y5', data=df, color='green', linewidth=2.2, label="0.25")
+        plt.plot('x', 'y6', data=df, color='black', linewidth=2, label="0.3", linestyle='dashed')
+        plt.legend(prop={'size': 10})
+        plt.savefig('exp2/selection-' + str(select_type) + '-crossover-' + str(cross_type)
+                    + '-cr-' + str(cr) + '.png')
+        plt.show()
+        plt.close()
+
+
+def exp1(coupling, cross_type, select_type):
     results = []
 
     for cr in cr_rate:
         for mr in mr_rate:
             ga = GA(coupling=coupling, stakeholder_importance=(6, 4), release_relative_importance=(0.8, 0.1, 0.1),
-                    release_duration=43, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
-                    mutation_rate=mr)
+                    release_duration=27, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
+                    mutation_rate=mr, auto_termination=True, max_cycles=2000, population_percentage=0.9)
             ga.solve()
-
-            print(ga.mobile_release_plan)
-            print(ga.objective_function(ga.mobile_release_plan))
-            print(ga.effort_release_1, ga.effort_release_2, ga.effort_release_3)
 
             # cross_type, select_type, fitness, mr, cr, cycles, time
             results.append((cross_type, select_type, ga.objective_function(ga.mobile_release_plan), mr, cr, ga.cycles,
                             ga.end - ga.start))
-            if "tournament" != select_type:
-                tallies = [tally for _, _, tally in ga.scored]
-                scores = [score for _, score, _ in ga.scored]
+            iterations = [i for i, _ in ga.best_per_iteration]
+            scores = [best for _, best in ga.best_per_iteration]
 
-                plot_data(sorted(tallies), sorted(scores), "Tally", "Fitness Scores",
-                          "Fitness Function", cross_type=cross_type, select_type=select_type,
-                          fitness=ga.objective_function(ga.mobile_release_plan), mr_rate=mr, cr_rate=cr,
-                          cycles=ga.cycles, processing_time=ga.end - ga.start)
+            plot_data(sorted(iterations), sorted(scores), "Iteration", "Fitness Score",
+                      "Fitness Function", cross_type=cross_type, select_type=select_type,
+                      fitness=ga.objective_function(ga.mobile_release_plan), mr=mr, cr=cr,
+                      cycles=ga.cycles, processing_time=ga.end - ga.start)
 
     results.sort(key=lambda s: s[2])
-    print(results)
+    df2 = pd.DataFrame(np.array(results),
+                       columns=['Crossover Type', 'Selection', 'Fitness Score', 'Mutation Rate', 'Crossover Rate',
+                                'Cycles Taken to Converge', 'Time'])
+    df2.to_csv('exp1/selection-' + str(select_type) + '-crossover-' + str(cross_type) + '.csv')
 
 
 def main():
     # coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
     coupling = {}
 
-    # exp1(coupling, "ordered", "fittest")
-    # exp1(coupling, "ordered", "proportionate")
-    # exp1(coupling, "ordered", "tournament")
-    #
-    # exp1(coupling, "partially_matched", "fittest")
-    # exp1(coupling, "partially_matched", "proportionate")
-    # exp1(coupling, "partially_matched", "tournament")
-    #
-    # exp1(coupling, "edge_recombination", "fittest")
-    # exp1(coupling, "edge_recombination", "proportionate")
-    # exp1(coupling, "edge_recombination", "tournament")
+    exp1(coupling, "ordered", "fittest")
+    exp2(coupling, "ordered", "proportionate")
+    exp2(coupling, "ordered", "tournament")
+
+    exp2(coupling, "partially_matched", "fittest")
+    exp2(coupling, "partially_matched", "proportionate")
+    exp2(coupling, "partially_matched", "tournament")
+
+    exp2(coupling, "edge_recombination", "fittest")
+    exp2(coupling, "edge_recombination", "proportionate")
+    exp2(coupling, "edge_recombination", "tournament")
 
 
 if __name__ == "__main__":
