@@ -15,11 +15,8 @@ class LP(base.MobileReleasePlanner):
         """
         Initialize a linear programming/greedy algorithm.
 
-        :type shuffle: bool
-        :param shuffle (bool): Shuffle features.
-
         :type is_sorted: bool
-        :param is_sorted (bool): Sort features in descending order based on WAS of 1st release.
+        :param is_sorted (bool): Sort features in descending order based on WAS of 1st release or shuffle.
 
         :type stakeholder_importance:(int, int)
         :param stakeholder_importance (tuple): Stakeholders importance.

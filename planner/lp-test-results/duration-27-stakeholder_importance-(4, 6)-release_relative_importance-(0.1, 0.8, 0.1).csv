@@ -1,66 +1,63 @@
 ,Release,WAS,Key,Feature,Effort (Story Point)
-0,1,3.8000000000000003,R-96634A,unnecessary permissions,5
-1,1,2.4000000000000004,R-F69E00,like paint,5
-2,1,3.8000000000000003,R-AF2B1C,picky guy,5
-3,1,1.0,PAINTROID-131,github crowdin integration,3
-4,2,1.0,PAINTROID-160,save load pocketpaint format,13
-5,1,11.600000000000001,R-5E819E,move image,5
-6,2,11.600000000000001,R-98A13A,good range,5
-7,2,1.0,PAINTROID-163,save temporary copies automatically,5
-8,3,1.0,PAINTROID-145,fastlane support huawei store,5
-9,1,1.0,PAINTROID-158,share feature,3
-10,2,1.0,PAINTROID-164,close transform tool options clicking apply,2
-11,3,2.8000000000000003,R-A980E9,perfect substitute,5
-12,3,2.8000000000000003,R-300547,transparent color,5
-13,3,11.600000000000001,R-668B00,quite complex picture,5
-14,3,5.800000000000001,R-D19856,main issue tools,5
-15,4,11.600000000000001,R-3F0BF1,reduces resolution,5
-16,4,5.800000000000001,R-BCDAE9,many tools,5
-17,4,3.8000000000000003,R-85D7B5,satisfy my experience,5
-18,4,3.8000000000000003,R-3AF2E2,wide verity,5
-19,4,5.800000000000001,R-75E4C9,add graph,5
-20,4,1.0,PAINTROID-157,feedback menu entry overflow menu,3
-21,4,1.0,PAINTROID-151,copy paste symbols stamp tool selection application,3
-22,4,1.0,PAINTROID-130,build paintroid pull requests catroid develop jenkins,8
-23,4,1.0,PAINTROID-148,export,3
-24,4,1.0,PAINTROID-149,better compression research implementation,5
-25,4,3.8000000000000003,R-C8D2B9,stamp pictures,5
-26,4,1.0,R-2C68F6,change width,5
-27,4,5.800000000000001,R-63F731,add pen tool,5
-28,4,1.0,R-8DF677,low resolution,5
-29,4,1.0,PAINTROID-162,paste tool,5
-30,4,11.600000000000001,R-AD6FA6,do some quite,5
-31,4,3.8000000000000003,R-13F306,available font,5
-32,4,3.8000000000000003,R-0034A2,gauging smaller sizes,5
-33,4,1.0,PAINTROID-153,hint change default settings tools,3
-34,4,5.800000000000001,R-6EE5D1,future update,5
-35,4,1.0,PAINTROID-156,spray tool,5
-36,4,1.0,PAINTROID-152,checkmark confirm tool applications,3
-37,4,2.8000000000000003,R-39AE49,load photos,5
-38,4,2.8000000000000003,R-25F111,resize photos like ms,5
-39,4,2.8000000000000003,R-27F12A,ms paint,5
-40,4,1.0,PAINTROID-150,save dialog,3
-41,4,3.8000000000000003,R-6196D4,free and powerful,5
-42,4,3.8000000000000003,R-996C76,image edition,5
-43,4,1.4000000000000001,PAINTROID-122,image file size editing,20
-44,4,11.600000000000001,R-6C0F36,removes exif data,5
-45,4,1.0,PAINTROID-155,insert image catrobat media gallery,5
-46,4,15.4,R-D3F38D,dead fast,5
-47,4,1.0,R-BBC436,infinite painter,5
-48,4,1.0,PAINTROID-121,upload mapping jenkins release builds,5
-49,4,3.8000000000000003,R-9CF344,takes little time,5
-50,2,1.0,PAINTROID-154,auto crop icon,2
-51,4,1.0,R-BC148C,paint bucket,5
-52,4,11.600000000000001,R-602D16,simple draw offer,5
-53,4,1.0,PAINTROID-161,save load pocketpaint format,20
-54,4,1.0,PAINTROID-147,confirm tool application selecting tool,5
-55,4,5.800000000000001,R-C22608,shrink an image,5
-56,4,5.800000000000001,R-16B15D,resize tool,5
-57,4,1.0,PAINTROID-159,hide unhide layer,5
-58,4,2.4000000000000004,R-60E21C,microsoft computers,5
-59,4,1.0,PAINTROID-146,center button transform tool,5
-60,4,5.800000000000001,R-79BD74,user interface,5
-61,4,1.0,PAINTROID-126,reuse drawingsurface pipette activity,8
-62,4,5.800000000000001,R-6B0836,free and many,5
-63,,Effort R1: 26.0,Effort R2: 27.0,Effort R3: 25.0,F(x): 63.2
-64,,,D: 27,"S: (4, 6)","RRI: (0.1, 0.8, 0.1)"
+0,1,1.0,PAINTROID-153,hint change default settings tools,3
+1,1,1.0,PAINTROID-163,save temporary copies automatically,5
+2,1,5.800000000000001,R-6C3447,future update,5
+3,1,1.0,PAINTROID-162,paste tool,5
+4,1,1.0,PAINTROID-164,close transform tool options clicking apply,2
+5,1,1.0,PAINTROID-159,hide unhide layer,5
+6,2,11.600000000000001,R-10681F,removes exif data,5
+7,2,1.0,PAINTROID-126,reuse drawingsurface pipette activity,8
+8,2,11.600000000000001,R-EF8B24,simple draw offer,5
+9,2,5.800000000000001,R-4226EF,main issue tools,5
+10,3,11.600000000000001,R-B737B7,quite complex picture,5
+11,2,1.0,PAINTROID-150,save dialog,3
+12,1,1.0,PAINTROID-154,auto crop icon,2
+13,3,1.0,R-61612B,infinite painter,5
+14,3,3.8000000000000003,R-B1C129,picky guy,5
+15,3,1.0,PAINTROID-121,upload mapping jenkins release builds,5
+16,3,1.0,PAINTROID-148,export,3
+17,4,3.8000000000000003,R-800B19,image edition,5
+18,4,1.0,PAINTROID-161,save load pocketpaint format,20
+19,4,5.800000000000001,R-94C4ED,resize tool,5
+20,4,11.600000000000001,R-B35486,good range,5
+21,4,1.0,R-78EC8E,low resolution,5
+22,4,5.800000000000001,R-78C4A2,add graph,5
+23,4,3.8000000000000003,R-205482,available font,5
+24,4,3.8000000000000003,R-174201,satisfy my experience,5
+25,4,2.4000000000000004,R-7BE176,microsoft computers,5
+26,4,2.8000000000000003,R-B84BCA,perfect substitute,5
+27,4,3.8000000000000003,R-915433,pocket code,5
+28,4,11.600000000000001,R-4892DC,do some quite,5
+29,4,5.800000000000001,R-3CFAF6,shrink an image,5
+30,4,5.800000000000001,R-DFB4D8,add pen tool,5
+31,3,1.0,PAINTROID-158,share feature,3
+32,4,3.8000000000000003,R-22693E,edit photos of gacha,5
+33,4,1.0,R-7B41CF,paint bucket,5
+34,4,1.0,PAINTROID-131,github crowdin integration,3
+35,4,2.8000000000000003,R-1D5DFA,transparent color,5
+36,4,1.0,PAINTROID-157,feedback menu entry overflow menu,3
+37,4,1.0,PAINTROID-152,checkmark confirm tool applications,3
+38,4,15.4,R-D13C68,dead fast,5
+39,4,1.0,PAINTROID-149,better compression research implementation,5
+40,4,1.0,PAINTROID-160,save load pocketpaint format,13
+41,4,3.8000000000000003,R-2BB9BA,wide verity,5
+42,4,3.8000000000000003,R-51B067,free and powerful,5
+43,4,1.0,PAINTROID-147,confirm tool application selecting tool,5
+44,4,1.0,PAINTROID-155,insert image catrobat media gallery,5
+45,4,3.8000000000000003,R-5E25F6,takes little time,5
+46,4,1.0,PAINTROID-130,build paintroid pull requests catroid develop jenkins,8
+47,4,1.0,PAINTROID-145,fastlane support huawei store,5
+48,4,1.4000000000000001,PAINTROID-122,image file size editing,20
+49,4,3.8000000000000003,R-2D8EAD,unnecessary permissions,5
+50,4,1.0,PAINTROID-146,center button transform tool,5
+51,4,2.4000000000000004,R-1DC93C,like paint,5
+52,4,3.8000000000000003,R-84404B,gauging smaller sizes,5
+53,4,2.8000000000000003,R-0EB3CF,load photos,5
+54,4,1.0,PAINTROID-156,spray tool,5
+55,4,5.800000000000001,R-CABB93,user interface,5
+56,4,11.600000000000001,R-8E7BE8,move image,5
+57,4,11.600000000000001,R-80818F,reduces resolution,5
+58,4,1.0,PAINTROID-151,copy paste symbols stamp tool selection application,3
+59,4,2.8000000000000003,R-5499A3,edit small things,5
+60,,Effort R1: 27.0,Effort R2: 26.0,Effort R3: 26.0,F(x): 62.2
+61,,,D: 27,"S: (4, 6)","RRI: (0.1, 0.8, 0.1)"

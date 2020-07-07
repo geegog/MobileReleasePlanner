@@ -31,10 +31,10 @@ class GA(base.MobileReleasePlanner):
         :param stakeholder_importance (tuple): Stakeholders importance.
 
         :type population_percentage: float
-        :param population_percentage : When to terminate algorithm if all scores from this percentage is similar.
+        :param population_percentage : Percentage of optimal solutions to observe, when auto termination is turned on.
 
         :type auto_termination: bool
-        :param auto_termination : Turn on auto termination function.
+        :param auto_termination : Turn on auto termination function. Termination criteria is if x% of the scored and sorted population has the same fitness score
 
         :type release_relative_importance: (float, float, float)
         :param release_relative_importance: Release relative importance.
