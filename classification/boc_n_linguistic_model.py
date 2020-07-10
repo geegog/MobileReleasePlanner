@@ -239,7 +239,7 @@ if __name__ == '__main__':
     df2 = pd.DataFrame(np.array([[cr[1][0], cr[1][1], cr[1][2], cr[1][3], cr[1][4]]]),
                        columns=['E', 'R', 'P', 'N', 'B'])
 
-    df2.to_csv('classes.csv')
+    df2.to_csv('classes-evaluation.csv')
 
     end_time = time.time() - start_time
 

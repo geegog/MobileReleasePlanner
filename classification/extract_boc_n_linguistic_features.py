@@ -40,7 +40,7 @@ class ReviewFeatureExtractor:
 
         self.get_dataset(df=df, content_index=4)
 
-        self.df_dataset.to_csv('../data/reviews.csv', index=True)
+        self.df_dataset.to_csv('../data/reviews-evaluation.csv', index=True)
 
     @staticmethod
     def clean_sentence(sent):
@@ -84,10 +84,11 @@ class ReviewFeatureExtractor:
 
         new_start_date = datetime.datetime.strptime('2019-07-24 00:00:00', '%Y-%m-%d %H:%M:%S')
         old_start_date = datetime.datetime.strptime('2019-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-        old_end_date = datetime.datetime.strptime('2019-07-24 00:00:00', '%Y-%m-%d %H:%M:%S')
+        old_end_date = datetime.datetime.strptime('2019-04-18 00:00:00', '%Y-%m-%d %H:%M:%S')
         for index, row in df.iterrows():
             date_time_obj = datetime.datetime.strptime(row[8], '%Y-%m-%d %H:%M:%S')
-            if isinstance(row[content_index], str) and date_time_obj >= new_start_date:
+            if isinstance(row[content_index], str) and (old_start_date <= date_time_obj <= old_end_date):
+                # if isinstance(row[content_index], str) and date_time_obj >= new_start_date:
                 text = row[content_index]
                 if is_eval:
                     self.process_dataset(content_index, text, row, is_eval)

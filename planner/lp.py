@@ -1,9 +1,12 @@
+import time
+
 import pandas as pd
 import numpy as np
 import random
 import copy
 
 from planner import base
+from planner.util import save_model_result
 
 
 class LP(base.MobileReleasePlanner):
@@ -37,6 +40,8 @@ class LP(base.MobileReleasePlanner):
         self.delete_flag = False
         self.highest = highest
         self.is_sorted = is_sorted
+        self.start = None
+        self.end = None
 
         super(LP, self).__init__(stakeholder_importance, release_relative_importance, release_duration, coupling)
 
@@ -47,7 +52,7 @@ class LP(base.MobileReleasePlanner):
         :type array_was_feature: list
         :param array_was_feature: Release and WAS for a feature
         """
-
+        self.start = time.time()
         # original_feature_set = copy.copy(array_was_feature)
         if self.is_sorted:
             array_was_feature = sorted(array_was_feature, key=lambda f: f[0][1], reverse=True)
@@ -77,6 +82,8 @@ class LP(base.MobileReleasePlanner):
                         self.delete_flag = False
                 else:
                     self.assign(max_feature, feature_array)
+
+        self.end = time.time()
 
     def assign(self, max_feature, feature_array, total_effort=None, couple=None, couple_array=None):
         """
@@ -120,13 +127,12 @@ class LP(base.MobileReleasePlanner):
                 self.append_to_release(4, max_feature[1], max_feature[2], max_feature[3], max_feature[4])
 
 
-def main():
+def test():
     # coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
 
     d = 27
     si = [(4, 6), (6, 4)]
     rrp = [(0.3, 0.3, 0.3), (0.8, 0.1, 0.1), (0.1, 0.8, 0.1), (0.1, 0.1, 0.8)]
-    heading = ['Release', 'WAS', 'Key', 'Feature', 'Effort (Story Point)']
 
     for i in si:
         for ri in rrp:
@@ -136,38 +142,34 @@ def main():
 
             features = lp.features()
 
-            # data = np.array(features)
-            # result = pd.DataFrame(data=data)
-            # print(result)
-
             lp.assignment_function(features)
 
-            mrp = lp.mobile_release_plan
-
-            rows = []
-
-            for r in mrp:
-                rows.append([r[0], r[1], r[2], r[3], r[4]])
-            obj_score = lp.objective_function(lp.mobile_release_plan)
-
-            print('Effort R1: ' + str(lp.effort_release_1),
-                  'Effort R2: ' + str(lp.effort_release_2),
-                  'Effort R3: ' + str(lp.effort_release_3),
-                  'D: ' + str(d) + ' S: ' + ''.join(
-                      str(i)) + ' RRI: ' + ''.join(str(ri)),
-                  'Objective Function: ' + str(obj_score))
-
-            rows.append(['', 'Effort R1: ' + str(lp.effort_release_1),
-                         'Effort R2: ' + str(lp.effort_release_2),
-                         'Effort R3: ' + str(lp.effort_release_3),
-                         'F(x): ' + str(obj_score)])
-            rows.append(['', '', 'D: ' + str(d), 'S: ' + ''.join(
-                str(i)), 'RRI: ' + ''.join(str(ri))])
-            df2 = pd.DataFrame(np.array(rows),
-                               columns=heading)
-
-            df2.to_csv('lp-test-results/' + 'duration-' + str(d) + '-stakeholder_importance-' + ''.join(
+            save_model_result(lp, 'lp-test-results/' + 'duration-' + str(d) + '-stakeholder_importance-' + ''.join(
                 str(i)) + '-release_relative_importance-' + ''.join(str(ri)) + '.csv')
+
+
+def run():
+
+    d = 27
+    i = (6, 4)
+    ri = (0.8, 0.1, 0.1)
+
+    lp = LP(coupling=None, stakeholder_importance=i, release_relative_importance=ri,
+            release_duration=d, is_sorted=False)
+
+    features = lp.features()
+
+    lp.assignment_function(features)
+
+    processing_time = lp.end - lp.start
+    print('Processing Time: ' + str(processing_time))
+
+    save_model_result(lp, 'results/mrp_lp.csv')
+
+
+def main():
+
+    run()
 
 
 if __name__ == "__main__":

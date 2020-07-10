@@ -12,6 +12,8 @@ from planner.lp import LP
 
 import matplotlib
 
+from planner.util import save_model_result
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -497,9 +499,9 @@ class GA(base.MobileReleasePlanner):
             while not terminate_flag:
                 offspring = self.ga_operation()
                 score = self.evaluate(offspring)
-                # if not self.exist(offspring):
-                self.seed.append(offspring)
-                self.cull()
+                if not self.exist(offspring):
+                    self.seed.append(offspring)
+                    self.cull()
                 terminate_flag = self.check_termination()
                 self.cycles += 1
         except KeyboardInterrupt:
@@ -543,7 +545,7 @@ def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
     """
 
     if cycles is not None:
-        cycles = 'Cycles: ' + str(cycles) + ' '
+        cycles = 'Iterations: ' + str(cycles) + ' '
     else:
         cycles = ''
     if processing_time is not None:
@@ -569,7 +571,7 @@ def plot_data(x_axis_data, y_axis_data, x_axis_name, y_axis_name, title,
 
     plt.legend(prop={'size': 10})
 
-    plt.savefig('exp1/selection-' + str(select_type) + '-crossover-' + str(cross_type)
+    plt.savefig('exp3/selection-' + str(select_type) + '-crossover-' + str(cross_type)
                 + '-cr-' + str(cr) + '-mr-' + str(mr) + '.png')
     plt.show()
     plt.close()
@@ -584,13 +586,13 @@ def exp3(coupling, cross_type, select_type):
     fitness_scores_generation = []
 
     cr = 0.1
-    mr = 0.05
+    mr = 0.3
 
     for size in generations:
         ga = GA(coupling=coupling, stakeholder_importance=(6, 4),
                 release_relative_importance=(0.8, 0.1, 0.1),
                 release_duration=27, cross_type=cross_type, select_type=select_type, population_size=size,
-                mutation_rate=mr, crossover_rate=cr, auto_termination=True)
+                mutation_rate=mr, crossover_rate=cr)
         result = ga.solve()
         fitness_scores_generation.append(result[1])
 
@@ -647,7 +649,7 @@ def exp1(coupling, cross_type, select_type):
         for mr in mr_rate:
             ga = GA(coupling=coupling, stakeholder_importance=(6, 4), release_relative_importance=(0.8, 0.1, 0.1),
                     release_duration=27, cross_type=cross_type, select_type=select_type, crossover_rate=cr,
-                    mutation_rate=mr, auto_termination=True, max_cycles=2000, population_percentage=0.9)
+                    mutation_rate=mr, auto_termination=True, max_cycles=2000, population_percentage=0.3)
             ga.solve()
 
             # cross_type, select_type, fitness, mr, cr, cycles, time
@@ -668,21 +670,37 @@ def exp1(coupling, cross_type, select_type):
     df2.to_csv('exp1/selection-' + str(select_type) + '-crossover-' + str(cross_type) + '.csv')
 
 
+def run():
+    d = 27
+    i = (6, 4)
+    ri = (0.8, 0.1, 0.1)
+    ga = GA(coupling=None, stakeholder_importance=i, release_relative_importance=ri,
+            release_duration=d, cross_type='partially_matched', select_type='fittest', crossover_rate=0.1,
+            mutation_rate=0.3, auto_termination=True, population_percentage=0.3)
+
+    ga.solve()
+    processing_time = ga.end - ga.start
+    print('Processing Time: ' + str(processing_time))
+    save_model_result(ga, 'results/mrp_ga-evaluation.csv')
+
+
 def main():
     # coupling = {("F7", "F8"), ("F9", "F12"), ("F13", "F14")}
     coupling = {}
 
-    exp1(coupling, "ordered", "fittest")
-    exp2(coupling, "ordered", "proportionate")
-    exp2(coupling, "ordered", "tournament")
+    # exp2(coupling, "ordered", "fittest")
+    # exp2(coupling, "ordered", "proportionate")
+    # exp2(coupling, "ordered", "tournament")
 
-    exp2(coupling, "partially_matched", "fittest")
-    exp2(coupling, "partially_matched", "proportionate")
-    exp2(coupling, "partially_matched", "tournament")
+    # exp3(coupling, "partially_matched", "fittest")
+    # exp2(coupling, "partially_matched", "proportionate")
+    # exp2(coupling, "partially_matched", "tournament")
+    #
+    # exp2(coupling, "edge_recombination", "fittest")
+    # exp2(coupling, "edge_recombination", "proportionate")
+    # exp2(coupling, "edge_recombination", "tournament")
 
-    exp2(coupling, "edge_recombination", "fittest")
-    exp2(coupling, "edge_recombination", "proportionate")
-    exp2(coupling, "edge_recombination", "tournament")
+    run()
 
 
 if __name__ == "__main__":

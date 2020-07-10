@@ -81,11 +81,12 @@ def issue_tracker_features():
     df_dataset = pd.read_csv('../data/jira.catrob.at-PAINTROID-issues.csv')
     rows = []
     new_start_date = datetime.datetime.fromisoformat('2019-07-24 00:00:00.000')
-    old_start_date = datetime.datetime.fromisoformat('2019-01-01 00:00:00.000')
-    old_end_date = datetime.datetime.fromisoformat('2019-07-24 00:00:00.000')
+    old_start_date = datetime.datetime.fromisoformat('2018-10-01 00:00:00.000')
+    old_end_date = datetime.datetime.fromisoformat('2019-04-18 00:00:00.000')
     for index, data in df_dataset.iterrows():
         date_time_obj = datetime.datetime.strptime(data[9], '%Y-%m-%dT%H:%M:%S.%f%z').replace(tzinfo=None)
         if data[68] == 'new' and data[43] == 'Story' and date_time_obj >= new_start_date:
+            # if data[43] == 'Story' and (old_start_date <= date_time_obj <= old_end_date):
             # ['Feature Key',
             #     'Feature f(i)',
             #     'Effort(days) t(i,2)',
@@ -93,7 +94,8 @@ def issue_tracker_features():
             #     'Stakeholder S (1), Urgency u(1,i)',
             #     'Stakeholder S (2), Value v(2,i)',
             #     'Stakeholder S (2), Urgency u(2,i)']
-            feature = [data[149], preprocess(data[30]), int(5 if math.isnan(data[28]) else data[28]), 0, '(0, 0, 0)', 0, '(0, 0, 0)']
+            feature = [data[149], preprocess(data[30]), int(5 if math.isnan(data[28]) else data[28]), 0, '(0, 0, 0)', 0,
+                       '(0, 0, 0)']
             rows.append(feature)
     return rows
 
@@ -239,8 +241,8 @@ def get_features_from_app_reviews_and_issue_tracker():
     df2 = pd.DataFrame(np.array(key_link),
                        columns=['key', 'random key'])
 
-    df.to_csv('../data/features.csv', index=False)
-    df2.to_csv('../data/key_link.csv', index=False)
+    df.to_csv('../data/features-evaluation.csv', index=False)
+    df2.to_csv('../data/key_link-evaluation.csv', index=False)
     print('here')
 
 

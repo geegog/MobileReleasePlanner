@@ -1,0 +1,54 @@
+,Release,WAS,Key,Feature,Effort (Story Point)
+0,1,33.6,R-E1649C,made transparent,5
+1,1,148.8,R-C9A310,background eraser,5
+2,1,33.6,R-3AD796,eg layers,5
+3,1,8,PAINTROID-34,text tool confirm,2
+4,1,8,PAINTROID-63,color input,3
+5,1,8,PAINTROID-68,resize canvas tool,5
+6,2,0,PAINTROID-27,refactor tools transformtool,5
+7,2,0,PAINTROID-45,update strings crowdin,5
+8,1,8,PAINTROID-66,rename crop transform tool,0
+9,2,0,PAINTROID-41,rotating icons example shape tool,3
+10,2,0,PAINTROID-40,shape feedback,3
+11,2,0,PAINTROID-44,merge jenkins,5
+12,2,0,PAINTROID-20,refactor tools brush,5
+13,3,0,PAINTROID-64,color picker library,8
+14,3,0,PAINTROID-14,refactor tools public static variables,13
+15,4,8,PAINTROID-39,menus slide buggy,8
+16,3,0,PAINTROID-47,merge jenkins,5
+17,4,8,PAINTROID-62,text stroke option,5
+18,4,8,PAINTROID-31,jenkins release pipeline,5
+19,4,8,PAINTROID-29,jenkins avoid gradle clean,5
+20,4,8,PAINTROID-26,refactor tools cursor,5
+21,4,8,PAINTROID-15,refactor tools modification tools,20
+22,4,8,PAINTROID-36,auto crop functionality feedback,3
+23,4,8,PAINTROID-25,refactor tools pipette,5
+24,1,8,PAINTROID-43,remove options tools options,2
+25,4,8,PAINTROID-10,handle android dependencies docker directly,5
+26,4,8,PAINTROID-65,color picker fullscreen,5
+27,4,8,PAINTROID-67,hand tool,5
+28,4,8,PAINTROID-51,remove native code,5
+29,4,8,PAINTROID-13,refactor tools separate application business logic,40
+30,4,8,PAINTROID-21,refactor tools stamptool,5
+31,4,8,PAINTROID-35,color picker apply cancel buttons,3
+32,4,8,PAINTROID-18,refactor tools eraser,5
+33,4,8,PAINTROID-11,revert texttool size options removal,5
+34,4,8,PAINTROID-33,merge jenkins limit resources paintroid docker container,5
+35,4,8,PAINTROID-53,remove camera option,5
+36,2,0,PAINTROID-42,remove long press tools,1
+37,4,8,PAINTROID-22,refactor tools texttool,5
+38,4,8,PAINTROID-9,replace save icon fitting alternative,5
+39,4,8,PAINTROID-28,jenkins track statistics,5
+40,4,8,PAINTROID-37,proper icon tools screen,2
+41,4,12.8,R-E7C15A,settings option,5
+42,4,8,PAINTROID-24,refactor tools filltool,5
+43,4,12.8,R-D1901F,lowers resolution,5
+44,4,8,PAINTROID-71,create block library,5
+45,4,8,PAINTROID-23,refactor tools importtool,5
+46,4,8,PAINTROID-19,refactor tools linetool,5
+47,4,8,PAINTROID-16,refactor tools basetool observable,13
+48,4,8,PAINTROID-12,refactor tools public static tool state,5
+49,4,8,PAINTROID-30,merge jenkins,5
+50,4,8,PAINTROID-52,improve permission reasoning texts,5
+51,4,8,PAINTROID-17,refactor tools shapetool,5
+52,,Effort R1: 27.0,Effort R2: 27.0,Effort R3: 26.0,F(x): 256.0

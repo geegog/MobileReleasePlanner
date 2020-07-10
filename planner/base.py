@@ -42,7 +42,7 @@ class MobileReleasePlanner(object):
         self.effort_release_3 = 0.0
         self.coupling = coupling
         self.release_duration = release_duration
-        self.inputs = pd.read_csv("../data/features.csv",
+        self.inputs = pd.read_csv("../data/features-evaluation.csv",
                                   dtype={"Stakeholder S (1), Value value(1,i)": "Int64",
                                          "Stakeholder S (2), Value value(2,i)": "Int64"})
         self.inputs.columns = ["Feature Key", "Feature f(i)", "Effort(Story Points) t(i,2)",
