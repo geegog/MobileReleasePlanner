@@ -20,7 +20,7 @@ class Source(Enum):
 class SentenceClassification:
     def __init__(self):
         df_dataset = pd.read_csv('../Review_Dataset/Gu_Dataset_features.csv', index_col=False)
-        self.review_dataset = pd.read_csv('../data/reviews.csv', index_col=False,
+        self.review_dataset = pd.read_csv('../data/reviews-evaluation.csv', index_col=False,
                                           dtype={"class": "string"})
         self.train_dataset, self.test_data = train_test_split(df_dataset, test_size=0.2)
 

@@ -681,7 +681,7 @@ def run():
     ga.solve()
     processing_time = ga.end - ga.start
     print('Processing Time: ' + str(processing_time))
-    save_model_result(ga, 'results/mrp_ga-evaluation.csv')
+    save_model_result(ga, 'results/mrp_ga-evaluation-alt.csv')
 
 
 def main():
