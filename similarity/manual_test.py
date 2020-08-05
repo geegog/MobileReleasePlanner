@@ -86,6 +86,7 @@ def plot(precision, f1score, recall, model):
 
     plt.title("\n".join(wrap("Threshold Plot for " + model, 60)))
     plt.xlabel('Threshold')
+    plt.ylabel('Metric Value')
 
     plt.plot('x', 'y1', data=df, color='blue', linewidth=2, label="Precision")
     plt.plot('x', 'y2', data=df, color='brown', linewidth=2, label="F1 Score")
@@ -109,11 +110,11 @@ def get_plots_for_models():
     scores_model_bert_large_nli_stsb_meantokens.columns = columns
     scores_model_jaccard.columns = columns
 
-    loop_data('bert_base_nli_mean_tokens', scores_model_bert_base_nli_mean_tokens)
-    loop_data('bert_base_nli_stsb_mean_tokens', scores_model_bert_base_nli_stsb_mean_tokens)
-    loop_data('bert_large_nli_mean_tokens', scores_model_bert_large_nli_mean_tokens)
-    loop_data('bert_large_nli_stsb_mean_tokens', scores_model_bert_large_nli_stsb_meantokens)
-    loop_data('jaccard', scores_model_jaccard)
+    loop_data('M1 (bert-base-nli-mean-tokens + Cosine Similarity)', scores_model_bert_base_nli_mean_tokens)
+    loop_data('M3 (bert-base-nli-stsb-mean-tokens + Cosine Similarity)', scores_model_bert_base_nli_stsb_mean_tokens)
+    loop_data('M2 (bert-large-nli-mean-tokens + Cosine Similarity)', scores_model_bert_large_nli_mean_tokens)
+    loop_data('M4 (bert-large-nli-stsb-mean-tokens + Cosine Similarity).', scores_model_bert_large_nli_stsb_meantokens)
+    loop_data('M5 (Jaccard Similarity)', scores_model_jaccard)
 
 
 def loop_data(model, data):

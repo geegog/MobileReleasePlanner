@@ -675,7 +675,7 @@ def run():
     i = (6, 4)
     ri = (0.8, 0.1, 0.1)
     ga = GA(coupling=None, stakeholder_importance=i, release_relative_importance=ri,
-            release_duration=d, cross_type='partially_matched', select_type='fittest', crossover_rate=0.1,
+            release_duration=d, cross_type='ordered', select_type='fittest', crossover_rate=0.9,
             mutation_rate=0.3, auto_termination=True, population_percentage=0.3)
 
     ga.solve()
