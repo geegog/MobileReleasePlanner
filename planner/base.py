@@ -31,7 +31,7 @@ class MobileReleasePlanner(object):
         if coupling is None:
             coupling = {}
         if stakeholder_importance is None:
-            self.stakeholder_importance = (5, 5)
+            self.stakeholder_importance = (6, 6)
         if release_relative_importance is None:
             self.release_relative_importance = (0.3, 0.3, 0.3)
         self.release_relative_importance = release_relative_importance
